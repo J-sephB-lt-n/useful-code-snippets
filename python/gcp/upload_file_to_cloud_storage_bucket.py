@@ -1,5 +1,5 @@
 """
-TAGS: {bucket|cloud|gcp|google|google cloud|object|storage|upload|write}
+TAGS: bucket|cloud|gcp|google|google cloud|object|storage|upload|write
 
 Function which writes a file from the local filesystem to a google cloud storage bucket
 """
