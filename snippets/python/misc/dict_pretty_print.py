@@ -1,7 +1,6 @@
 """
 TAGS: dict|pretty|pretty print|print
-
-Defines function pd(), which prints a dictionary in an aesthetic readable way using json.dumps()
+DESCRIPTION: Function pd() prints a dictionary in an aesthetic readable way using json.dumps()
 """
 
 import json
