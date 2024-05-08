@@ -29,19 +29,28 @@ all_table_names: tuple[str] = tuple(
 
 bigquery_job_config = bigquery.job.ExtractJobConfig()
 bigquery_job_config.destination_format = (
-	bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
+    bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
 )
-for table_name in all_table_names[:3]:
-	bigquery_extract_job = bigquery_client.extract_table(
-		bigquery.DatasetReference(
-			GCP_PROJECT_NAME,
-			BIGQUERY_DATASET_NAME,
-		).table(table_name),
-		f"{OUTPUT_BUCKET_PATH}/{table_name}.jsonl",
-		job_config=bigquery_job_config,
-		location=GCP_LOCATION,
-	)
-	bigquery_extract_job.result()
-	print(f"Completed: [{table_name}]")
+errors_history = []
+success_count: int = 0
+for table_name in all_table_names:
+    try:
+        bigquery_extract_job = bigquery_client.extract_table(
+            bigquery.DatasetReference(
+                GCP_PROJECT_NAME,
+                BIGQUERY_DATASET_NAME,
+            ).table(table_name),
+            f"{OUTPUT_BUCKET_PATH}/{table_name}.jsonl",
+            job_config=bigquery_job_config,
+            location=GCP_LOCATION,
+        )
+        bigquery_extract_job.result()
+        print(f"Completed: [{table_name}]")
+        success_count += 1
+    except Exception as err:
+        errors_history.append({"table_name": table_name, "error_string": str(err)})
+        print(f"!ERROR! extracting table {table_name}. Error was:\n{err}")
 
-
+print("\n --SUMMARY-- \n")
+print(f"{success_count} tables successfully extracted")
+print(f"{len(errors_history)} tables faild to extract")
