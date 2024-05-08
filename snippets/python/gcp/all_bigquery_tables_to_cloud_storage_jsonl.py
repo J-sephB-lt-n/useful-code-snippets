@@ -53,4 +53,4 @@ for table_name in all_table_names:
 
 print("\n --SUMMARY-- \n")
 print(f"{success_count} tables successfully extracted")
-print(f"{len(errors_history)} tables faild to extract")
+print(f"{len(errors_history)} tables failed to extract")
