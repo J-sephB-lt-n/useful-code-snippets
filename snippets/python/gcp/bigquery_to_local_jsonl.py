@@ -12,7 +12,7 @@ GCP_PROJECT_NAME: Final[str] = "you fill this in"
 GCP_LOCATION: Final[str] = "europe-west2"
 BIGQUERY_DATASET_NAME: Final[str] = "you fill this in"
 BIGQUERY_TABLE_NAME: Final[str] = "you fill this in"
-OUTPUT_FILENAME: Final[str] = "output.jsonl"  # change this to whatever you want
+OUTPUT_FILENAME: Final[str] = f"{BIGQUERY_TABLE_NAME}.jsonl" 
 INTERIM_OUTPUT_GCP_BUCKET_NAME: Final[str] = "gs://put_your_bucket_name_here"
 INTERIM_OUTPUT_GCP_BUCKET_FILEPATH: Final[str] = (
     f"{INTERIM_OUTPUT_GCP_BUCKET_NAME}/{OUTPUT_FILENAME}"
