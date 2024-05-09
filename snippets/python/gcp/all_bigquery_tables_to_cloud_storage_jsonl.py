@@ -1,5 +1,5 @@
 """
-TAGS: all|bigquery|big query|cloud|database|dataset|download|dump|files|gcp|google|google cloud|json|jsonl|migrate|read|sql|tables|transfer
+TAGS: all|bigquery|big query|cloud|cloud storage|database|dataset|download|dump|files|gcp|google|google cloud|json|jsonl|migrate|read|sql|storage|tables|transfer
 DESCRIPTION: Dumps each table within a Google BigQuery dataset into a .jsonl file on cloud storage 
 """
 

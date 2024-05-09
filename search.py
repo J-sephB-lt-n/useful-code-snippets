@@ -4,9 +4,13 @@ Free-text search for a code snippet
 
 import json
 import pickle
+import sys
 from collections import defaultdict
 
-search_text: str = input(
+if len(sys.argv)==2:
+    search_text = sys.argv[1]
+else:
+    search_text: str = input(
     """
     +-------------------------+
     | SEARCH FOR CODE SNIPPET |
