@@ -15,6 +15,7 @@ Words joined by underscore in the search query are considered a single phrase e.
 
 Current code snippets available:
 
+```bash
 snippets
 ├── bash
 │   └── gcp
@@ -28,3 +29,4 @@ snippets
     │   └── find_connected_node_paths.py
     └── misc
         └── dict_pretty_print.py
+```
