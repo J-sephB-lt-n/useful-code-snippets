@@ -12,3 +12,19 @@ $ python search.py "google cloud bigquery to cloud storage"
 Your query is compared against the script tags (tags are at the top of each code snippet script).
 
 Words joined by underscore in the search query are considered a single phrase e.g. google_cloud_storage is interpreted by the search as "google cloud storage"
+
+Current code snippets available:
+
+snippets
+├── bash
+│   └── gcp
+│       └── setup_python_on_ec2_virtual_machine.sh
+└── python
+    ├── gcp
+    │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
+    │   ├── bigquery_to_local_jsonl.py
+    │   └── upload_file_to_cloud_storage_bucket.py
+    ├── graph
+    │   └── find_connected_node_paths.py
+    └── misc
+        └── dict_pretty_print.py
