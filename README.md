@@ -16,17 +16,21 @@ Words joined by underscore in the search query are considered a single phrase e.
 Current code snippets available:
 
 ```bash
-snippets
-├── bash
-│   └── gcp
-│       └── setup_python_on_ec2_virtual_machine.sh
-└── python
-    ├── gcp
-    │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
-    │   ├── bigquery_to_local_jsonl.py
-    │   └── upload_file_to_cloud_storage_bucket.py
-    ├── graph
-    │   └── find_connected_node_paths.py
-    └── misc
-        └── dict_pretty_print.py
+├── snippets
+│   ├── bash
+│   │   └── gcp
+│   │       └── setup_python_on_ec2_virtual_machine.sh
+│   ├── database
+│   └── python
+│       ├── database
+│       ├── gcp
+│       │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
+│       │   ├── bigquery_to_local_jsonl.py
+│       │   └── upload_file_to_cloud_storage_bucket.py
+│       ├── graph
+│       │   └── find_connected_node_paths.py
+│       ├── misc
+│       │   └── dict_pretty_print.py
+│       └── nlp
+│           └── text_to_bag_of_words_nltk.py
 ```
