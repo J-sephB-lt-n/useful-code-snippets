@@ -1,6 +1,7 @@
 """
 TAGS: bag|bag of words|bow|language|of|natural|nlp|natural language|natural language processing|nltk|token|tokens|tokenisation|tokenization|word|words
 DESCRIPTION: Converts a given html file into a bag-of-words representation (i.e. a count of words by frequency of occurrence)
+NOTES: This process might benefit from adding stemming and n-grams
 """
 
 # pip install beautifulsoup4 (I used version pip install beautifulsoup4==4.12.3)
