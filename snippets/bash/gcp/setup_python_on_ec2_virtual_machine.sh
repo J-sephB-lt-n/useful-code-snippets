@@ -3,8 +3,21 @@ TAGS: cloud|compute engine|ec2|gcp|google|google cloud|install|pyenv|python|setu
 DESCRIPTION: Bash code for setting up python on a google cloud platform EC2 compute engine virtual machine (using pyenv)
 ###BLOCK-COMMENT
 
-# TLDR: use pyenv (follow their setup instructions)
 
+################
+# QUICK METHOD #
+################
+# This is quicker to get up and running, but makes it harder when you want to install a new version of python
+sudo apt-get install python3-pip
+sudo apt-get install python3.11-venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+################
+# PYENV METHOD #
+################
+# This allows easy management of python versions
 sudo apt update
 sudo apt install curl git-all -y
 sudo apt install build-essential libssl-dev zlib1g-dev \
@@ -19,7 +32,6 @@ export PYENV_ROOT="$HOME/.pyenv"
 eval "$(pyenv init -)"' | tee -a ~/.profile  ~/.bashrc
 
 echo 'eval "$(pyenv virtualenv-init -)"' >> ~/.bashrc
-
 
 exec "$SHELL" # restart shell
 
