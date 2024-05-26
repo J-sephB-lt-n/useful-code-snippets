@@ -20,7 +20,6 @@ Current code snippets available:
 │   ├── bash
 │   │   └── gcp
 │   │       └── setup_python_on_ec2_virtual_machine.sh
-│   ├── database
 │   └── python
 │       ├── database
 │       ├── gcp
@@ -30,6 +29,7 @@ Current code snippets available:
 │       ├── graph
 │       │   └── find_connected_node_paths.py
 │       ├── misc
+│       │   ├── code_section_timer.py
 │       │   └── dict_pretty_print.py
 │       └── nlp
 │           └── text_to_bag_of_words_nltk.py
