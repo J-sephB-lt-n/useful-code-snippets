@@ -1,5 +1,4 @@
 import argparse
-import time
 from typing import Final
 
 import google.cloud.storage
@@ -9,7 +8,11 @@ import pyspark.sql.functions
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 
-start_time: float = time.perf_counter()
+from code_section_timer import CodeSectionTimer
+
+timer = CodeSectionTimer()
+
+timer.checkpoint("Start Pyspark Script")
 nltk.download("stopwords")
 
 parser = argparse.ArgumentParser()
@@ -40,15 +43,18 @@ parser.add_argument(
 args = parser.parse_args()
 
 MIN_WORD_NCHARS: Final[int] = 3
+timer.checkpoint("Count files to process")
 N_FILES_TO_PROCESS: Final[int] = sum(
     1
     for _ in google.cloud.storage.Client().list_blobs(
         args.data_input_bucket.replace("gs://", ""), prefix=args.data_input_path
     )
 )
+timer.checkpoint("Generate stopwords list")
 STOPWORDS: tuple[str] = tuple((w for w in stopwords.words("english") if "'" not in w))
 STOPWORDS_STR: Final[str] = ", ".join([f"'{w}'" for w in STOPWORDS])
 
+timer.checkpoint("Start spark session")
 spark = pyspark.sql.SparkSession.builder.appName("html_word_counter").getOrCreate()
 
 
@@ -71,9 +77,11 @@ def text_from_html_str(html_str: str) -> str:
     return text
 
 
+timer.checkpoint("Read in input data")
 df = spark.read.text(
     f"{args.data_input_bucket}/{args.data_input_path}/*.html", wholetext=True
 )
+timer.checkpoint("Data processing")
 df = df.withColumn("html_filepath", pyspark.sql.functions.input_file_name())
 df = df.selectExpr("html_filepath", "value AS html_raw")
 
@@ -108,12 +116,13 @@ GROUP BY    html_filepath
 """
 )
 
+timer.checkpoint("Exporting results to cloud storage")
 df.write.mode("overwrite").option("maxRecordsPerFile", 500_000).parquet(
     f"{args.data_output_bucket}/{args.data_output_path}"
 )
 
-print(
-    f"FINISHED: Processed {N_FILES_TO_PROCESS:,} files in {(time.perf_counter()-start_time)/60:,.2f} minutes."
-)
+
+timer.checkpoint("Finished Pyspark Script")
+print(timer.summary_string())
 
 spark.stop()
