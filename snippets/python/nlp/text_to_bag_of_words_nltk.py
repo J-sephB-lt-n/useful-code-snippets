@@ -30,8 +30,7 @@ for element in soup(["style", "script"]):
 for element in soup.select('[style*="display:none"], [style*="visibility:hidden"]'):
     element.decompose()
 
-text: str = soup.get_text(separator=" ")
-text = "\n".join((line.strip() for line in text.splitlines()))
+text: str = soup.get_text(separator=" ", strip=True)
 text = text.lower()
 text = re.sub(r"\n", " ", text)
 text = re.sub(r"\s+", " ", text)
