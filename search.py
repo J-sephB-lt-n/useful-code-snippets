@@ -1,3 +1,4 @@
+#
 """
 Free-text search for a code snippet
 """
@@ -7,11 +8,11 @@ import pickle
 import sys
 from collections import defaultdict
 
-if len(sys.argv)==2:
+if len(sys.argv) == 2:
     search_text = sys.argv[1]
 else:
     search_text: str = input(
-    """
+        """
     +-------------------------+
     | SEARCH FOR CODE SNIPPET |
     +-------------------------+
@@ -22,7 +23,7 @@ Please describe what you are looking for:
             the query 'cloud storage google_cloud'
             results in the lookup tokens {"cloud", "storage", "google cloud"}
         """
-)
+    )
 search_tokens: set[str] = [
     word.lower().strip().replace("_", " ") for word in search_text.split()
 ]

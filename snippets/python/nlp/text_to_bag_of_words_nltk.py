@@ -18,14 +18,20 @@ from nltk.corpus import stopwords
 MIN_WORD_LEN_NCHAR: Final[int] = 3
 MIN_WORD_FREQ_COUNT: Final[int] = 1
 
-nltk.download("stopwords") # this only needs to be run once
+nltk.download("stopwords")  # this only needs to be run once
 
 with open("some_webpage.html", "r", encoding="utf-8") as file:
     raw_html: str = file.read()
 
 soup = BeautifulSoup(raw_html, "html.parser")
 
-text: str = soup.text
+for element in soup(["style", "script"]):
+    element.decompose()
+for element in soup.select('[style*="display:none"], [style*="visibility:hidden"]'):
+    element.decompose()
+
+text: str = soup.get_text(separator=" ")
+text = "\n".join((line.strip() for line in text.splitlines()))
 text = text.lower()
 text = re.sub(r"\n", " ", text)
 text = re.sub(r"\s+", " ", text)
