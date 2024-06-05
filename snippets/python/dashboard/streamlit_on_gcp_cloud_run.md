@@ -1,6 +1,6 @@
 ```
-TAGS: cloud|cloud run|dashboard|gcp|google|google cloud|gui|streamlit|ui|user interface
-DESCRIPTION: TODO
+TAGS: cloud|cloud run|dashboard|data visualisation|data visualization|datavis|dataviz|frontend|gcp|google|google cloud|gui|html|iframe|streamlit|ui|user interface|visualisation|visualization|web|website
+DESCRIPTION: Deploy a streamlit dashboard on a Google Cloud Run service, and include it in an HTML page as an iframe
 ```
 
 Directory structure:
