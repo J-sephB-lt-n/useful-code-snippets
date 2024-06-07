@@ -22,8 +22,9 @@ snippets
 │       └── setup_python_on_ec2_virtual_machine.sh
 └── python
     ├── dashboard
-    │   └── streamlit_on_gcp_cloud_run.md
-    ├── database
+    │   └── streamlit
+    │       ├── streamlit_layout_tiling_example.py
+    │       └── streamlit_on_gcp_cloud_run.md
     ├── gcp
     │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
     │   ├── bigquery_to_local_jsonl.py
