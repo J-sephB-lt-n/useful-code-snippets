@@ -42,5 +42,5 @@ Current code snippets available:
 │       ├── nlp
 │       │   └── text_to_bag_of_words_nltk.py
 │       └── spark
-│           └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md``bash
+│           └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
 ```
