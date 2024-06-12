@@ -24,7 +24,8 @@ Current code snippets available:
 │   └── python
 │       ├── dashboard
 │       │   ├── dash
-│       │   │   └── dash_basic_auth.py
+│       │   │   ├── dash_basic_auth.py
+│       │   │   └── dash_element_tiling.py
 │       │   └── streamlit
 │       │       ├── streamlit_layout_tiling_example.py
 │       │       └── streamlit_on_gcp_cloud_run.md
