@@ -25,7 +25,8 @@ Current code snippets available:
 │       ├── dashboard
 │       │   ├── dash
 │       │   │   ├── dash_basic_auth.py
-│       │   │   └── dash_element_tiling.py
+│       │   │   ├── dash_element_tiling.py
+│       │   │   └── dash_multi_tab_app.py
 │       │   └── streamlit
 │       │       ├── streamlit_layout_tiling_example.py
 │       │       └── streamlit_on_gcp_cloud_run.md
@@ -41,5 +42,5 @@ Current code snippets available:
 │       ├── nlp
 │       │   └── text_to_bag_of_words_nltk.py
 │       └── spark
-│           └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
+│           └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md``bash
 ```
