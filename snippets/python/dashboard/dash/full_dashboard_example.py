@@ -58,35 +58,6 @@ def simulate_data(n_rows: int) -> dict[int, list[dict]]:
     return datasets
 
 
-def overlaid_histograms_fig(df) -> go.Figure:
-    """Many thanks to ChatGPT for this code"""
-    fig = go.Figure()
-
-    # Add histograms for each group
-    for group in df["group"].unique():
-        group_data = df[df["group"] == group]
-        fig.add_trace(
-            go.Histogram(
-                x=group_data["amount"],
-                name=f"Histogram {group}",
-                histnorm="probability density",
-                opacity=0.5,
-            )
-        )
-
-    # Update layout for better visibility
-    fig.update_layout(
-        barmode="overlay",
-        title="Overlaid Histograms and Density Plots",
-        xaxis_title="Amount",
-        yaxis_title="Frequency",
-        legend_title="Group",
-        template="plotly_white",
-    )
-
-    return fig
-
-
 data = simulate_data(n_rows=100)
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
@@ -103,17 +74,37 @@ SIDEBAR_STYLE = {
 # the styles for the main content:
 # to the right of the sidebar and add some padding.
 CONTENT_STYLE = {
-    "margin-left": "18rem",
+    "margin-left": "8rem",
     "margin-right": "2rem",
     "padding": "2rem 1rem",
 }
 
-# sidebar = html.Div(
+PLOT_STYLE = {
+    "paper_bgcolor": "black",  # Background color of the entire figure
+    "plot_bgcolor": "black",  # Background color of the plotting area,
+    "font": dict(color="white"),  # Text color
+    "xaxis": dict(
+        showgrid=False,
+        linecolor="white",
+        tickcolor="white",
+        title_font=dict(color="white"),
+        tickfont=dict(color="white"),
+    ),  # X-axis style
+    "yaxis": dict(
+        showgrid=False,
+        linecolor="white",
+        tickcolor="white",
+        title_font=dict(color="white"),
+        tickfont=dict(color="white"),
+    ),  # Y-axis style
+    "title_font": dict(color="white"),  # Title text color
+}
+
 sidebar = dbc.Nav(
     [
         html.H2("Plotly Dash Example", className="display-4"),
-        html.Hr(),
-        html.P("some text here", className="lead"),
+        # html.Hr(),
+        # html.P("some text here", className="lead"),
         dbc.Nav(
             [
                 dbc.NavLink("Welcome", href="/", active="exact"),
@@ -128,23 +119,43 @@ sidebar = dbc.Nav(
     style=SIDEBAR_STYLE,
 )
 
-content = html.Div(
+# content = html.Div(
+content = dbc.Container(
     [
-        html.Div(
+        dbc.Stack(
             [
-                dcc.Dropdown(
-                    [
-                        "Selected dataset: [dataset 1]",
-                        "Selected dataset: [dataset 2]",
-                        "Selected dataset: [dataset 3]",
+                dbc.DropdownMenu(
+                    label="Select Dataset",
+                    menu_variant="dark",
+                    children=[
+                        dbc.DropdownMenuItem(
+                            "Dataset 1",
+                            id="select-dataset1",
+                            n_clicks=0,
+                        ),
+                        dbc.DropdownMenuItem(
+                            "Dataset 2",
+                            id="select-dataset2",
+                            n_clicks=0,
+                        ),
+                        dbc.DropdownMenuItem(
+                            "Dataset 3",
+                            id="select-dataset3",
+                            n_clicks=0,
+                        ),
                     ],
-                    "Selected dataset: [dataset 1]",
-                    id="dataset-selector",
+                ),
+                dbc.Alert(
+                    children=f"Dataset {global_current_dataset_id}",
+                    id="selected-dataset-alert",
+                    color="light",
                 ),
             ],
+            direction="horizontal",
+            gap=3,
             style=CONTENT_STYLE,
         ),
-        html.Div(id="page-content", style=CONTENT_STYLE),
+        dbc.Container(id="page-content", style=CONTENT_STYLE),
     ],
 )
 
@@ -154,20 +165,27 @@ app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content])
 
 @app.callback(
     Output("page-content", "children"),
-    [Input("url", "pathname"), Input("dataset-selector", "value")],
+    [
+        Input("url", "pathname"),
+        Input("select-dataset1", "n_clicks"),
+        Input("select-dataset2", "n_clicks"),
+        Input("select-dataset3", "n_clicks"),
+    ],
 )
-def render_page_content(pathname, selected_dataset):
+def render_page_content(pathname, select_dataset1, select_dataset2, select_dataset3):
     global global_log_strings
     global global_current_dataset_id
     global global_current_page_url
 
-    dataset_id = int(selected_dataset[-2])
-    if dataset_id != global_current_dataset_id:
-        global_current_dataset_id = dataset_id
-        global_log_strings = [
-            f"{datetime_now()} Selected dataset {dataset_id}",
-            html.Br(),
-        ] + global_log_strings
+    ctx = dash.callback_context
+    if ctx.triggered_id in ("select-dataset1", "select-dataset2", "select-dataset3"):
+        dataset_id = int(ctx.triggered_id[-1])
+        if dataset_id != global_current_dataset_id:
+            global_current_dataset_id = dataset_id
+            global_log_strings = [
+                f"{datetime_now()} Selected dataset {dataset_id}",
+                html.Br(),
+            ] + global_log_strings
 
     if pathname == "/":
         if global_current_page_url != pathname:
@@ -184,12 +202,11 @@ def render_page_content(pathname, selected_dataset):
                 f"{datetime_now()} Visited Raw Data page",
                 html.Br(),
             ] + global_log_strings
-        dataset_id = int(selected_dataset[-2])
         return html.Div(
             [
-                html.Button("Download CSV", id="download_csv_button", n_clicks=0),
+                dbc.Button("Download CSV", id="download_csv_button", n_clicks=0),
                 dcc.Download(id="download-csv"),
-                dash_table.DataTable(data[dataset_id]),
+                dash_table.DataTable(data[global_current_dataset_id]),
             ]
         )
     elif pathname == "/dataviz":
@@ -203,39 +220,51 @@ def render_page_content(pathname, selected_dataset):
         selected_dataset_df = pd.DataFrame(data[global_current_dataset_id])
         return dbc.Stack(
             [
-                dcc.Graph(
-                    figure=px.line(
-                        selected_dataset_df,
-                        x="time",
-                        y="amount",
-                        color="group",
-                        title="Line Plots",
+                dbc.Col(
+                    dcc.Graph(
+                        figure=px.line(
+                            selected_dataset_df,
+                            x="time",
+                            y="amount",
+                            color="group",
+                            title="Line Plots",
+                        ).update_layout(**PLOT_STYLE)
                     )
                 ),
-                dcc.Graph(
-                    figure=px.bar(
-                        selected_dataset_df,
-                        x="time",
-                        y="amount",
-                        color="group",
-                        title="Stacked Bar Chart",
+                dbc.Col(
+                    dcc.Graph(
+                        figure=px.bar(
+                            selected_dataset_df,
+                            x="time",
+                            y="amount",
+                            color="group",
+                            title="Stacked Bar Chart",
+                        ).update_layout(**PLOT_STYLE)
                     )
                 ),
                 dbc.Stack(
                     [
                         dbc.Col(
                             dcc.Graph(
-                                figure=ff.create_distplot(
-                                    [
-                                        [
-                                            x["amount"]
-                                            for x in data[dataset_id]
-                                            if x["group"] == group
-                                        ]
-                                        for group in ("A", "B", "C")
-                                    ],
-                                    ["A", "B", "C"],
-                                )
+                                figure=px.histogram(
+                                    data[global_current_dataset_id],
+                                    x="amount",
+                                    # y="",
+                                    color="group",
+                                    marginal="box",
+                                    title="Overlaid Histograms",
+                                ).update_layout(**PLOT_STYLE)
+                                # figure=ff.create_distplot(
+                                #     [
+                                #         [
+                                #             x["amount"]
+                                #             for x in data[global_current_dataset_id]
+                                #             if x["group"] == group
+                                #         ]
+                                #         for group in ("A", "B", "C")
+                                #     ],
+                                #     ["A", "B", "C"],
+                                # ).update_layout(**PLOT_STYLE)
                             ),
                             width=8,
                         ),
@@ -248,13 +277,12 @@ def render_page_content(pathname, selected_dataset):
                                     values="sum_amount",
                                     names="group",
                                     title="Pie Chart",
-                                )
+                                ).update_layout(**PLOT_STYLE)
                             ),
                             width=4,
                         ),
                     ],
                     direction="horizontal",
-                    gap=3,
                 ),
             ],
             direction="vertical",
@@ -273,6 +301,21 @@ def render_page_content(pathname, selected_dataset):
         ],
         className="p-3 bg-light rounded-3",
     )
+
+
+@app.callback(
+    Output("selected-dataset-alert", "children"),
+    [
+        Input("url", "pathname"),
+        Input("select-dataset1", "n_clicks"),
+        Input("select-dataset2", "n_clicks"),
+        Input("select-dataset3", "n_clicks"),
+    ],
+)
+def show_selected_dataset(*args):
+    ctx = dash.callback_context
+    if ctx.triggered_id:
+        return f"Dataset {ctx.triggered_id[-1]}"
 
 
 @app.callback(
