@@ -71,7 +71,7 @@ SIDEBAR_STYLE = {
     "top": 0,
     "left": 0,
     "bottom": 0,
-    "width": "10vw",
+    "width": "12rem",
     "padding": "2rem 1rem",
     # "background-color": "#f8f9fa",
 }
@@ -79,9 +79,9 @@ SIDEBAR_STYLE = {
 # the styles for the main content:
 # to the right of the sidebar and add some padding.
 CONTENT_STYLE = {
-    "margin-left": "15vw",
-    "margin-right": "5vw",
-    "width": "80vw",
+    "margin-left": "12rem",
+    "margin-right": "1rem",
+    "width": "50rem",
     "padding": "2rem 1rem",
 }
 
