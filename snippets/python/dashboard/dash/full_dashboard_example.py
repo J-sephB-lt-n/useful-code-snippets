@@ -1,7 +1,7 @@
 """
 TODO
 
-REQUIREMENTS: 
+REQUIREMENTS: TODO (dash dash_bootstrap_components pandas scipy) 
 USAGE: $ python dash_multi_tab_app.py
 
 Plan: 
@@ -20,7 +20,6 @@ import random
 
 import dash
 import dash_bootstrap_components as dbc
-from numpy import who
 import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
@@ -28,7 +27,7 @@ import plotly.graph_objects as go
 from dash import dash_table, Input, Output, dcc, html
 
 app = dash.Dash(
-    external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True
+    external_stylesheets=[dbc.themes.CYBORG], suppress_callback_exceptions=True
 )
 
 
@@ -98,7 +97,7 @@ SIDEBAR_STYLE = {
     "bottom": 0,
     "width": "16rem",
     "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
+    # "background-color": "#f8f9fa",
 }
 
 # the styles for the main content:
@@ -109,7 +108,8 @@ CONTENT_STYLE = {
     "padding": "2rem 1rem",
 }
 
-sidebar = html.Div(
+# sidebar = html.Div(
+sidebar = dbc.Nav(
     [
         html.H2("Plotly Dash Example", className="display-4"),
         html.Hr(),
