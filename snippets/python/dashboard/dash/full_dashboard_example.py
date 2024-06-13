@@ -1,7 +1,7 @@
 """
 TODO
 
-REQUIREMENTS: pip install "dash==2.17.0" "dash-bootstrap-components==1.6.0"
+REQUIREMENTS: 
 USAGE: $ python dash_multi_tab_app.py
 
 Plan: 
@@ -20,6 +20,11 @@ import random
 
 import dash
 import dash_bootstrap_components as dbc
+from numpy import who
+import pandas as pd
+import plotly.express as px
+import plotly.figure_factory as ff
+import plotly.graph_objects as go
 from dash import dash_table, Input, Output, dcc, html
 
 app = dash.Dash(
@@ -54,7 +59,36 @@ def simulate_data(n_rows: int) -> dict[int, list[dict]]:
     return datasets
 
 
-data = simulate_data(n_rows=5)
+def overlaid_histograms_fig(df) -> go.Figure:
+    """Many thanks to ChatGPT for this code"""
+    fig = go.Figure()
+
+    # Add histograms for each group
+    for group in df["group"].unique():
+        group_data = df[df["group"] == group]
+        fig.add_trace(
+            go.Histogram(
+                x=group_data["amount"],
+                name=f"Histogram {group}",
+                histnorm="probability density",
+                opacity=0.5,
+            )
+        )
+
+    # Update layout for better visibility
+    fig.update_layout(
+        barmode="overlay",
+        title="Overlaid Histograms and Density Plots",
+        xaxis_title="Amount",
+        yaxis_title="Frequency",
+        legend_title="Group",
+        template="plotly_white",
+    )
+
+    return fig
+
+
+data = simulate_data(n_rows=100)
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
@@ -77,7 +111,7 @@ CONTENT_STYLE = {
 
 sidebar = html.Div(
     [
-        html.H2("Navbar Title", className="display-4"),
+        html.H2("Plotly Dash Example", className="display-4"),
         html.Hr(),
         html.P("some text here", className="lead"),
         dbc.Nav(
@@ -85,7 +119,7 @@ sidebar = html.Div(
                 dbc.NavLink("Welcome", href="/", active="exact"),
                 dbc.NavLink("Raw Data", href="/data", active="exact"),
                 dbc.NavLink("Data Visualisations", href="/dataviz", active="exact"),
-                dbc.NavLink("Activity Log", href="/log", active="exact"),
+                dbc.NavLink("Dashboard Activity Log", href="/log", active="exact"),
             ],
             vertical=True,
             pills=True,
@@ -114,7 +148,8 @@ content = html.Div(
     ],
 )
 
-app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
+app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content])
+# app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 
 @app.callback(
@@ -133,6 +168,7 @@ def render_page_content(pathname, selected_dataset):
             f"{datetime_now()} Selected dataset {dataset_id}",
             html.Br(),
         ] + global_log_strings
+
     if pathname == "/":
         if global_current_page_url != pathname:
             global_current_page_url = pathname
@@ -163,7 +199,67 @@ def render_page_content(pathname, selected_dataset):
                 f"{datetime_now()} Visited Data Visualisations page",
                 html.Br(),
             ] + global_log_strings
-        return html.P("Data Visualisations")
+        # return html.P("Data Visualisations")
+        selected_dataset_df = pd.DataFrame(data[global_current_dataset_id])
+        return dbc.Stack(
+            [
+                dcc.Graph(
+                    figure=px.line(
+                        selected_dataset_df,
+                        x="time",
+                        y="amount",
+                        color="group",
+                        title="Line Plots",
+                    )
+                ),
+                dcc.Graph(
+                    figure=px.bar(
+                        selected_dataset_df,
+                        x="time",
+                        y="amount",
+                        color="group",
+                        title="Stacked Bar Chart",
+                    )
+                ),
+                dbc.Stack(
+                    [
+                        dbc.Col(
+                            dcc.Graph(
+                                figure=ff.create_distplot(
+                                    [
+                                        [
+                                            x["amount"]
+                                            for x in data[dataset_id]
+                                            if x["group"] == group
+                                        ]
+                                        for group in ("A", "B", "C")
+                                    ],
+                                    ["A", "B", "C"],
+                                )
+                            ),
+                            width=8,
+                        ),
+                        dbc.Col(
+                            dcc.Graph(
+                                figure=px.pie(
+                                    selected_dataset_df.groupby("group")
+                                    .agg(sum_amount=("amount", "sum"))
+                                    .reset_index(),
+                                    values="sum_amount",
+                                    names="group",
+                                    title="Pie Chart",
+                                )
+                            ),
+                            width=4,
+                        ),
+                    ],
+                    direction="horizontal",
+                    gap=3,
+                ),
+            ],
+            direction="vertical",
+            gap=0,
+        )
     elif pathname == "/log":
         if global_current_page_url != pathname:
             global_current_page_url = pathname
