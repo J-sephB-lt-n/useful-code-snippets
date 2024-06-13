@@ -1,7 +1,7 @@
 """
 TODO
 
-REQUIREMENTS: TODO (dash dash_bootstrap_components pandas scipy) 
+REQUIREMENTS: TODO (dash dash_auth dash_bootstrap_components pandas scipy) 
 USAGE: $ python dash_multi_tab_app.py
 
 Plan: 
@@ -25,9 +25,14 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objects as go
 from dash import dash_table, Input, Output, dcc, html
+from dash_auth import BasicAuth
 
 app = dash.Dash(
     external_stylesheets=[dbc.themes.CYBORG], suppress_callback_exceptions=True
+)
+
+BasicAuth(
+    app, {"admin": "password"}, secret_key="It4cQgcRTMxfNp4hdgliBIZ6BTErcddYzo/b7UDN"
 )
 
 
@@ -66,7 +71,7 @@ SIDEBAR_STYLE = {
     "top": 0,
     "left": 0,
     "bottom": 0,
-    "width": "16rem",
+    "width": "10vw",
     "padding": "2rem 1rem",
     # "background-color": "#f8f9fa",
 }
@@ -74,8 +79,9 @@ SIDEBAR_STYLE = {
 # the styles for the main content:
 # to the right of the sidebar and add some padding.
 CONTENT_STYLE = {
-    "margin-left": "8rem",
-    "margin-right": "2rem",
+    "margin-left": "15vw",
+    "margin-right": "5vw",
+    "width": "80vw",
     "padding": "2rem 1rem",
 }
 
@@ -153,13 +159,13 @@ content = dbc.Container(
             ],
             direction="horizontal",
             gap=3,
-            style=CONTENT_STYLE,
         ),
-        dbc.Container(id="page-content", style=CONTENT_STYLE),
+        dbc.Container(id="page-content"),
     ],
+    style=CONTENT_STYLE,
 )
 
-app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content])
+app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content], fluid=True)
 # app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 
@@ -202,12 +208,32 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
                 f"{datetime_now()} Visited Raw Data page",
                 html.Br(),
             ] + global_log_strings
-        return html.Div(
+        # return html.Div(
+        return dbc.Stack(
             [
-                dbc.Button("Download CSV", id="download_csv_button", n_clicks=0),
+                dbc.Col(
+                    dbc.Button("Download CSV", id="download_csv_button", n_clicks=0),
+                    width="auto",
+                ),
                 dcc.Download(id="download-csv"),
-                dash_table.DataTable(data[global_current_dataset_id]),
-            ]
+                dbc.Col(
+                    dash_table.DataTable(
+                        data[global_current_dataset_id],
+                        style_as_list_view=True,
+                        style_header={
+                            "backgroundColor": "rgb(30, 30, 30)",
+                            "color": "white",
+                        },
+                        style_data={
+                            "backgroundColor": "rgb(0, 0, 0)",
+                            "color": "white",
+                        },
+                    ),
+                    style={"padding": "0 5vw 0 5vw"},
+                ),
+            ],
+            direction="vertical",
+            gap=3,
         )
     elif pathname == "/dataviz":
         if global_current_page_url != pathname:
