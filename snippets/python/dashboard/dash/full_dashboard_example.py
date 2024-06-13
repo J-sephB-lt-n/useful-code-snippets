@@ -33,6 +33,7 @@ def datetime_now() -> str:
 
 global_log_strings = [f"{datetime_now()} Started session"]
 global_current_dataset_id = 1
+global_current_page_url = "/"
 
 
 def simulate_data(n_rows: int) -> dict[int, list[dict]]:
@@ -123,6 +124,8 @@ app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 def render_page_content(pathname, selected_dataset):
     global global_log_strings
     global global_current_dataset_id
+    global global_current_page_url
+
     dataset_id = int(selected_dataset[-2])
     if dataset_id != global_current_dataset_id:
         global_current_dataset_id = dataset_id
@@ -131,16 +134,20 @@ def render_page_content(pathname, selected_dataset):
             html.Br(),
         ] + global_log_strings
     if pathname == "/":
-        global_log_strings = [
-            f"{datetime_now()} Visited welcome page",
-            html.Br(),
-        ] + global_log_strings
+        if global_current_page_url != pathname:
+            global_current_page_url = pathname
+            global_log_strings = [
+                f"{datetime_now()} Visited Welcome page",
+                html.Br(),
+            ] + global_log_strings
         return html.P("Welcome text goes here")
     elif pathname == "/data":
-        global_log_strings = [
-            f"{datetime_now()} Visited Raw Data page",
-            html.Br(),
-        ] + global_log_strings
+        if global_current_page_url != pathname:
+            global_current_page_url = pathname
+            global_log_strings = [
+                f"{datetime_now()} Visited Raw Data page",
+                html.Br(),
+            ] + global_log_strings
         dataset_id = int(selected_dataset[-2])
         return html.Div(
             [
@@ -150,12 +157,16 @@ def render_page_content(pathname, selected_dataset):
             ]
         )
     elif pathname == "/dataviz":
-        global_log_strings = [
-            f"{datetime_now()} Visited Data Visualisations page",
-            html.Br(),
-        ] + global_log_strings
+        if global_current_page_url != pathname:
+            global_current_page_url = pathname
+            global_log_strings = [
+                f"{datetime_now()} Visited Data Visualisations page",
+                html.Br(),
+            ] + global_log_strings
         return html.P("Data Visualisations")
     elif pathname == "/log":
+        if global_current_page_url != pathname:
+            global_current_page_url = pathname
         return html.P(global_log_strings)
     # If the user tries to reach a different page, return a 404 message
     return html.Div(
