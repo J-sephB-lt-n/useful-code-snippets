@@ -26,19 +26,21 @@ import plotly.express as px
 from dash import Dash, dash_table, Input, Output, dcc, html
 from dash_auth import BasicAuth
 
+EXPOSE_TO_PUBLIC_INTERNET: Final[bool] = False
+
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.CYBORG],
+    external_stylesheets=[dbc.themes.CYBORG, "responsive_design.css"],
     suppress_callback_exceptions=True,
-    external_scripts=[
-        "https://tailwindcss.com/",
-        {"src": "https://cdn.tailwindcss.com"},
-    ],
+    # external_scripts=[
+    #     "https://tailwindcss.com/",
+    #     {"src": "https://cdn.tailwindcss.com"},
+    # ],
     meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"},
     ],
 )
-app.scripts.config.serve_locally = True
+# app.scripts.config.serve_locally = True
 server = app.server
 
 
@@ -46,8 +48,9 @@ BasicAuth(
     app, {"admin": "password"}, secret_key="It4cQgcRTMxfNp4hdgliBIZ6BTErcddYzo/b7UDN"
 )
 
-CONTENT_STYLE: Final[str] = "ml-60 mt-8 w-4/5"
-NAVBAR_STYLE: Final[str] = "fixed top-0 left-0 bottom-0 w-60"
+# CONTENT_STYLE: Final[str] = "mt-8 overflow-x-scroll"
+# NAVBAR_STYLE: Final[str] = "fixed top-0 left-0 bottom-0 w-60"
+# NAVBAR_STYLE: Final[str] = "top-0 left-0 bottom-0 w-60"
 DATA_TABLE_STYLE: Final[dict] = {
     "page_size": 15,
     "style_as_list_view": True,
@@ -125,10 +128,10 @@ sidebar = dbc.Nav(
             ],
             vertical=True,
             pills=True,
-            className="ml-3",
+            # className="ml-3",
         ),
     ],
-    className=NAVBAR_STYLE,
+    # className=NAVBAR_STYLE,
 )
 
 # content = html.Div(
@@ -168,11 +171,15 @@ content = dbc.Container(
         ),
         dbc.Container(id="page-content"),
     ],
-    className=CONTENT_STYLE,
-    # style=CONTENT_STYLE,
+    # className=CONTENT_STYLE,
+    # style={"width": "800px", "overflow-x": "scroll"},
+    id="main-content-container",
 )
 
-app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content], fluid=True)
+# app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content])
+app.layout = dbc.Container(
+    [dcc.Location(id="url"), sidebar, content],
+)
 
 
 @app.callback(
@@ -239,7 +246,10 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
                 html.Br(),
                 html.P("In future I want to add:"),
                 html.Ul(
-                    [html.Li("User can switch between light and dark mode.")],
+                    [
+                        html.Li("Page loading animations"),
+                        html.Li("User can switch between light and dark mode."),
+                    ],
                     className="list-decimal",
                 ),
             ]
@@ -263,7 +273,6 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
                         data[global_current_dataset_id],
                         **DATA_TABLE_STYLE,
                     ),
-                    style={"padding": "0 5vw 0 5vw"},
                 ),
             ],
             direction="vertical",
@@ -287,8 +296,8 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
                             y="amount",
                             color="group",
                             title="Line Plots",
-                        ).update_layout(**PLOT_STYLE)
-                    )
+                        ).update_layout(**PLOT_STYLE),
+                    ),
                 ),
                 dbc.Col(
                     dcc.Graph(
@@ -356,7 +365,7 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
         [
             html.H1("404: Not found", className="text-danger"),
             html.Hr(),
-            html.P(f"The pathname {pathname} was not recognised..."),
+            html.P(f"The page {pathname} does not exist."),
         ],
         className="p-3 bg-light rounded-3",
     )
@@ -404,4 +413,8 @@ def func(n_clicks):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False, host="0.0.0.0", port=8080)
+    # run local dev server #
+    if EXPOSE_TO_PUBLIC_INTERNET:
+        app.run_server(debug=False, host="0.0.0.0", port=8888)
+    else:
+        app.run_server(debug=True, port=8888)
