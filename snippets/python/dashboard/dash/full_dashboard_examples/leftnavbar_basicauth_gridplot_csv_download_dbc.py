@@ -2,38 +2,84 @@
 TODO
 
 REQUIREMENTS: TODO (dash dash_auth dash_bootstrap_components pandas scipy) 
-USAGE: $ python dash_multi_tab_app.py
+USAGE: $ python leftnavbar_basicauth_gridplot_csv_download_dbc.py
 
 Plan: 
     - the dashboard will generate 3 random datasets on launch, and will use these throughout the session
-    - tabs on the dashboard:
+    - pages on the dashboard:
         - a persistent continuously updated log of user's activity on the dashboard 
         - a raw view of the dataset currently selected (table)
         - a beautiful grid of visualisations of the selected dataset
-    - user can select which of the 3 datasets they want to look at (this control at the top of every tab)
+    - user can select which of the 3 datasets they want to look at (this control at the top of every page)
     - implement basic auth (username and password for access)
     - dashboard must look HEAT (visually) 
 """
 
 import datetime
 import random
+from typing import Final
 
 import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
-import plotly.figure_factory as ff
-import plotly.graph_objects as go
 from dash import dash_table, Input, Output, dcc, html
 from dash_auth import BasicAuth
 
 app = dash.Dash(
-    external_stylesheets=[dbc.themes.CYBORG], suppress_callback_exceptions=True
+    __name__,
+    external_stylesheets=[dbc.themes.CYBORG],
+    suppress_callback_exceptions=True,
+    external_scripts=[
+        "https://tailwindcss.com/",
+        {"src": "https://cdn.tailwindcss.com"},
+    ],
+    meta_tags=[
+        {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+    ],
 )
+app.scripts.config.serve_locally = True
+
 
 BasicAuth(
     app, {"admin": "password"}, secret_key="It4cQgcRTMxfNp4hdgliBIZ6BTErcddYzo/b7UDN"
 )
+
+CONTENT_STYLE: Final[str] = "ml-60 mt-8 w-4/5"
+NAVBAR_STYLE: Final[str] = "fixed top-0 left-0 bottom-0 w-60"
+DATA_TABLE_STYLE: Final[dict] = {
+    "page_size": 15,
+    "style_as_list_view": True,
+    "style_header": {
+        "backgroundColor": "rgb(30, 30, 30)",
+        "color": "white",
+    },
+    "style_data": {
+        "backgroundColor": "rgb(0, 0, 0)",
+        "color": "white",
+    },
+    "style_cell": {"border": "rgb(0,0,0)"},
+}
+PLOT_STYLE: Final[dict] = {
+    "paper_bgcolor": "black",  # Background color of the entire figure
+    "plot_bgcolor": "black",  # Background color of the plotting area,
+    "font": dict(color="white"),  # Text color
+    "xaxis": dict(
+        showgrid=False,
+        linecolor="white",
+        tickcolor="white",
+        title_font=dict(color="white"),
+        tickfont=dict(color="white"),
+    ),  # X-axis style
+    "yaxis": dict(
+        showgrid=False,
+        linecolor="white",
+        tickcolor="white",
+        title_font=dict(color="white"),
+        tickfont=dict(color="white"),
+    ),  # Y-axis style
+    "title_font": dict(color="white"),  # Title text color
+}
 
 
 def datetime_now() -> str:
@@ -65,52 +111,10 @@ def simulate_data(n_rows: int) -> dict[int, list[dict]]:
 
 data = simulate_data(n_rows=100)
 
-# the style arguments for the sidebar. We use position:fixed and a fixed width
-SIDEBAR_STYLE = {
-    "position": "fixed",
-    "top": 0,
-    "left": 0,
-    "bottom": 0,
-    "width": "12rem",
-    "padding": "2rem 1rem",
-    # "background-color": "#f8f9fa",
-}
-
-# the styles for the main content:
-# to the right of the sidebar and add some padding.
-CONTENT_STYLE = {
-    "margin-left": "12rem",
-    "margin-right": "1rem",
-    "width": "50rem",
-    "padding": "2rem 1rem",
-}
-
-PLOT_STYLE = {
-    "paper_bgcolor": "black",  # Background color of the entire figure
-    "plot_bgcolor": "black",  # Background color of the plotting area,
-    "font": dict(color="white"),  # Text color
-    "xaxis": dict(
-        showgrid=False,
-        linecolor="white",
-        tickcolor="white",
-        title_font=dict(color="white"),
-        tickfont=dict(color="white"),
-    ),  # X-axis style
-    "yaxis": dict(
-        showgrid=False,
-        linecolor="white",
-        tickcolor="white",
-        title_font=dict(color="white"),
-        tickfont=dict(color="white"),
-    ),  # Y-axis style
-    "title_font": dict(color="white"),  # Title text color
-}
 
 sidebar = dbc.Nav(
     [
-        html.H2("Plotly Dash Example", className="display-4"),
-        # html.Hr(),
-        # html.P("some text here", className="lead"),
+        html.H2("Plotly Dash Example", className="display-4 pl-3 pt-3, ml-3 mt-3"),
         dbc.Nav(
             [
                 dbc.NavLink("Welcome", href="/", active="exact"),
@@ -120,9 +124,10 @@ sidebar = dbc.Nav(
             ],
             vertical=True,
             pills=True,
+            className="ml-3",
         ),
     ],
-    style=SIDEBAR_STYLE,
+    className=NAVBAR_STYLE,
 )
 
 # content = html.Div(
@@ -157,16 +162,16 @@ content = dbc.Container(
                     color="light",
                 ),
             ],
-            direction="horizontal",
+            direction="vertical",
             gap=3,
         ),
         dbc.Container(id="page-content"),
     ],
-    style=CONTENT_STYLE,
+    className=CONTENT_STYLE,
+    # style=CONTENT_STYLE,
 )
 
 app.layout = dbc.Container([dcc.Location(id="url"), sidebar, content], fluid=True)
-# app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 
 
 @app.callback(
@@ -200,7 +205,44 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
                 f"{datetime_now()} Visited Welcome page",
                 html.Br(),
             ] + global_log_strings
-        return html.P("Welcome text goes here")
+        # return html.P("Welcome text goes here")
+        return dbc.Container(
+            [
+                html.Br(),
+                "This is an example of a dashboard built in python using Plotly Dash.",
+                html.Br(),
+                html.Br(),
+                "The current features are:",
+                html.Ul(
+                    [
+                        html.Li(
+                            "Responsive layout (responds to viewer device size) using tailwindcss."
+                        ),
+                        html.Li("Basic user authentication (username+password)."),
+                        html.Li(
+                            "Dataset selector (user can choose their dataset) at top of every page."
+                        ),
+                        html.Li(
+                            "Grid of plots of the selected dataset (`Data Visualisations` page)."
+                        ),
+                        html.Li("Table-view of the raw data (`Raw Data` page)."),
+                        html.Li(
+                            "Button to download CSV version of the raw data (`Raw Data` page)."
+                        ),
+                        html.Li(
+                            "User activity on the dashboard is logged (`Dashboard Activity Log` page)."
+                        ),
+                    ],
+                    className="list-decimal",
+                ),
+                html.Br(),
+                html.P("In future I want to add:"),
+                html.Ul(
+                    [html.Li("User can switch between light and dark mode.")],
+                    className="list-decimal",
+                ),
+            ]
+        )
     elif pathname == "/data":
         if global_current_page_url != pathname:
             global_current_page_url = pathname
@@ -213,21 +255,12 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
             [
                 dbc.Col(
                     dbc.Button("Download CSV", id="download_csv_button", n_clicks=0),
-                    width="auto",
                 ),
                 dcc.Download(id="download-csv"),
                 dbc.Col(
                     dash_table.DataTable(
                         data[global_current_dataset_id],
-                        style_as_list_view=True,
-                        style_header={
-                            "backgroundColor": "rgb(30, 30, 30)",
-                            "color": "white",
-                        },
-                        style_data={
-                            "backgroundColor": "rgb(0, 0, 0)",
-                            "color": "white",
-                        },
+                        **DATA_TABLE_STYLE,
                     ),
                     style={"padding": "0 5vw 0 5vw"},
                 ),
@@ -242,7 +275,6 @@ def render_page_content(pathname, select_dataset1, select_dataset2, select_datas
                 f"{datetime_now()} Visited Data Visualisations page",
                 html.Br(),
             ] + global_log_strings
-        # return html.P("Data Visualisations")
         selected_dataset_df = pd.DataFrame(data[global_current_dataset_id])
         return dbc.Stack(
             [
@@ -352,7 +384,7 @@ def show_selected_dataset(*args):
 def func(n_clicks):
     global global_log_strings
     global_log_strings = [
-        f"{datetime_now()} Downloaded dataset {global_current_dataset_id}",
+        f"{datetime_now()} Downloaded dataset {global_current_dataset_id} (CSV)",
         html.Br(),
     ] + global_log_strings
     csv_contents: str = (
