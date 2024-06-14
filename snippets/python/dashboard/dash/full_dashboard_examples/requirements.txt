@@ -1,4 +1,4 @@
-# pip install dash dash_auth dash_bootstrap_components pandas scipy
+# pip install dash dash_auth dash_bootstrap_components gunicorn pandas scipy
 blinker==1.8.2
 certifi==2024.6.2
 charset-normalizer==3.3.2
@@ -10,6 +10,7 @@ dash-html-components==2.0.0
 dash-table==5.0.0
 dash_auth==2.3.0
 Flask==3.0.3
+gunicorn==22.0.0
 idna==3.7
 importlib_metadata==7.1.0
 itsdangerous==2.2.0

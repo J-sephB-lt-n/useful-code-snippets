@@ -23,10 +23,10 @@ import dash
 import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
-from dash import dash_table, Input, Output, dcc, html
+from dash import Dash, dash_table, Input, Output, dcc, html
 from dash_auth import BasicAuth
 
-app = dash.Dash(
+app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.CYBORG],
     suppress_callback_exceptions=True,
@@ -39,6 +39,7 @@ app = dash.Dash(
     ],
 )
 app.scripts.config.serve_locally = True
+server = app.server
 
 
 BasicAuth(
