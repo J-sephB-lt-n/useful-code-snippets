@@ -17,7 +17,7 @@ Words joined by underscore in the search query are considered a single phrase e.
 Current code snippets available:
 
 ```bash
-├── snippets
+── snippets
 │   ├── bash
 │   │   └── gcp
 │   │       └── setup_python_on_ec2_virtual_machine.sh
@@ -30,6 +30,8 @@ Current code snippets available:
 │       │   └── streamlit
 │       │       ├── streamlit_layout_tiling_example.py
 │       │       └── streamlit_on_gcp_cloud_run.md
+│       ├── data
+│       │   └── native_groupby_agg.py
 │       ├── gcp
 │       │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
 │       │   ├── bigquery_to_local_jsonl.py
