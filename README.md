@@ -37,7 +37,8 @@ snippets
     ├── gcp
     │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
     │   ├── bigquery_to_local_jsonl.py
-    │   └── upload_file_to_cloud_storage_bucket.py
+    │   ├── upload_file_to_cloud_storage_bucket.py
+    │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
     ├── graph
     │   └── find_connected_node_paths.py
     ├── misc
