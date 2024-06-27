@@ -37,6 +37,7 @@ snippets
     ├── gcp
     │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
     │   ├── bigquery_to_local_jsonl.py
+    │   ├── self_deleting_vm.py
     │   ├── upload_file_to_cloud_storage_bucket.py
     │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
     ├── graph
@@ -47,5 +48,5 @@ snippets
     ├── nlp
     │   └── text_to_bag_of_words_nltk.py
     └── spark
-        └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
+        └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark
 ```
