@@ -1,0 +1,10 @@
+# TAGS: 3.12|browser|chrome|compute engine|docker|ec2|instance|python|python3|stable|vm|virtual machine|web
+# DESCRIPTION: Include these lines in your Dockerfile to install a Google Chrome browser in your python:3.12-slim docker container
+
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install gnupg wget -y
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
+RUN sh -c 'echo "deb https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+RUN apt-get update && apt-get install google-chrome-stable -y
+

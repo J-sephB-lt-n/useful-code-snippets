@@ -23,6 +23,9 @@ snippets
  │   │   └── setup_python_on_ec2_virtual_machine.sh
  │   └── ubuntu
  │       └── install_chrome_browser_on_ubuntu.sh
+ ├── docker
+ │   └── python
+ │       └── install_chrome_browser_in_python_docker_container
  └── python
      ├── dashboard
      │   ├── dash
