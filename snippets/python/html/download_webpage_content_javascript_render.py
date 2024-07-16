@@ -2,7 +2,7 @@
 TAGS: download|javascript|js|render|scrape|scraping|selenium|web|webpage|website 
 DESCRIPTION: Downloads a webpage after opening it in a chrome browser (in order to render the javascript)
 REQUIREMENTS: pip install seleniumbase
-REQUIREMENTS: A chrome browser s required (see snippets/bash/ubuntu/install_chrome_browser_on_ubuntu.sh)
+REQUIREMENTS: A chrome browser s required (see snippets/bash/ubuntu/install_chrome_browser_on_ubuntu.sh or snippets/docker/python/install_chrome_browser_in_python_docker_container)
 NOTES: On a machine without a display driver (e.g. gcloud VM), set USE_HEADLESS_BROWSER=True
 """
 
