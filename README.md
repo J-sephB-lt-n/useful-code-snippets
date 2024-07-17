@@ -20,6 +20,7 @@ Current code snippets available:
 ── snippets
 │   ├── bash
 │   │   ├── gcp
+│   │   │   ├── list_n_random_filenames_from_cloud_storage_bucket.sh
 │   │   │   └── setup_python_on_ec2_virtual_machine.sh
 │   │   ├── llm
 │   │   │   └── host_local_models_with_llama_cpp.sh
