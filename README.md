@@ -45,6 +45,7 @@ snippets
     ├── gcp
     │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
     │   ├── bigquery_to_local_jsonl.py
+    │   ├── bigquery_to_python.py
     │   ├── self_deleting_vm.py
     │   ├── upload_file_to_cloud_storage_bucket.py
     │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
