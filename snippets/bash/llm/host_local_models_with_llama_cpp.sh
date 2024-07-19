@@ -1,5 +1,5 @@
 <<'###BLOCK-COMMENT'
-TAGS: chat|gpt|host|hosting|language|large language model|llama|llm|local|nlp 
+TAGS: chat|gguf|gpt|host|hosting|language|large language model|llama|llm|local|nlp 
 DESCRIPTION: Hosting a Large Language Model (LLM) locally using llama.cpp
 ###BLOCK-COMMENT
 
@@ -19,6 +19,7 @@ curl -X POST http://localhost:8080/completion \
   -H "Content-Type: application/json" \
   -d '{
   "prompt": "Once upon a time",
-  "n_predict": 50   
+  "n_predict": 50,
+  "temperature": 0.0 
 }'
 # Llama-server documentation here: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
