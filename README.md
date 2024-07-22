@@ -46,6 +46,7 @@ snippets
     │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
     │   ├── bigquery_to_local_jsonl.py
     │   ├── bigquery_to_python.py
+    │   ├── cloud_storage_to_python.py
     │   ├── self_deleting_vm.py
     │   ├── upload_file_to_cloud_storage_bucket.py
     │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
@@ -61,6 +62,8 @@ snippets
     │   └── dict_pretty_print.py
     ├── nlp
     │   └── text_to_bag_of_words_nltk.py
+    ├── regex
+    │   └── extract_domain_from_website_url.py
     └── spark
         └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
 ```
