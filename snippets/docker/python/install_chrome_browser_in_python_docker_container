@@ -1,3 +1,4 @@
+#
 # TAGS: 3.12|browser|chrome|compute engine|docker|ec2|instance|python|python3|stable|vm|virtual machine|web
 # DESCRIPTION: Include these lines in your Dockerfile to install a Google Chrome browser in your python:3.12-slim docker container
 
