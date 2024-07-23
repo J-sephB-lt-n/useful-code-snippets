@@ -18,6 +18,9 @@ Current code snippets available:
 
 ```bash
 snippets
+├── R
+│   └── dataviz
+│       └── feature_distributions_by_continuous_target_variable.R
 ├── bash
 │   ├── gcp
 │   │   ├── list_n_random_filenames_from_cloud_storage_bucket.sh
