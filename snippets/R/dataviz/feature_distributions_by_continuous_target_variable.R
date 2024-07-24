@@ -5,6 +5,7 @@
 library(tidyverse) # install.packages("tidyverse")
 library(ggridges) # install.packages("ggridges")
 library(ggExtra) # install.packages("ggExtra")
+library(grid) # install.packages("grid")
 
 data <- tibble(
   y = rnorm(100), # Continuous target variable
@@ -14,19 +15,35 @@ data <- tibble(
   x4 = rnorm(100) # Continuous variable
 )
 
-categorical_feature_varnames <- c("x1", "x3")
-continuous_feature_varnames <- c("x2", "x4")
+categorical_feature_varnames <- data %>%
+  select(where(is.factor)) %>%
+  names()
+continuous_feature_varnames <- data %>%
+  select(where(is.numeric)) %>%
+  names()
 
 # For categorical variables, show distribution of Y within each level
 for (varname in categorical_feature_varnames) {
   print(
     data %>%
-      ggplot(., aes(x = y, y = .data[[varname]])) +
-      geom_density_ridges(
-        jittered_points = TRUE, position = "raincloud",
-        alpha = 0.7, scale = 0.9
-      )
+      ggplot(
+        .,
+        aes(
+          x = y,
+          y = .data[[varname]],
+          fill = factor(stat(quantile))
+        )
+      ) +
+      stat_density_ridges(
+        geom = "density_ridges_gradient",
+        calc_ecdf = TRUE,
+        quantiles = 4,
+        quantile_lines = TRUE,
+        color = "black" # line colour
+      ) +
+      scale_fill_viridis_d(name = "Quartiles")
   )
+  # grid.newpage() # this is required if knitting from RMarkdown (stops graphs plotted on top of one another)
 }
 
 # for continuous variables, show scatterplot with marginal histograms
@@ -39,5 +56,6 @@ for (varname in continuous_feature_varnames) {
       col = "black",
       fill = "orange"
     )
+    # grid.newpage() # this is required if knitting from RMarkdown (stops graphs plotted on top of one another)
   )
 }
