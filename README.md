@@ -62,7 +62,8 @@ snippets
     │   └── count_tokens_mistral_model.py
     ├── misc
     │   ├── code_section_timer.py
-    │   └── dict_pretty_print.py
+    │   ├── dict_pretty_print.py
+    │   └── function_retry_wrapper.py
     ├── nlp
     │   └── text_to_bag_of_words_nltk.py
     ├── regex
