@@ -58,6 +58,12 @@ snippets
     ├── html
     │   ├── download_webpage_content_javascript_render.py
     │   └── extract_user_facing_text_from_html.py
+    ├── http
+    │   └── flask
+    │       └── programmatically_host_local_flask_app.md
+    ├── image
+    │   └── pillow
+    │       └── arrange_images_in_grid.py
     ├── llm
     │   └── count_tokens_mistral_model.py
     ├── misc
