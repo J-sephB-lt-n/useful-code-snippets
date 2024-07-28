@@ -62,6 +62,7 @@ snippets
     │   └── flask
     │       └── programmatically_host_local_flask_app.md
     ├── image
+    │   ├── extract_colour_palette_from_image.py
     │   └── pillow
     │       └── arrange_images_in_grid.py
     ├── llm
