@@ -1,7 +1,7 @@
 """
 TAGS: beautifulsoup|content|extract|html|parse|text|user-facing|user|visible|web|webpage|website
 DESCRIPTION: Extracts the text from an HTML string which a user would actually see in their browser (i.e. no javascript, CSS etc.)
-EXAMPLE USAGE: python extract_user_facing_text_from_html.py --input_filepath './input.html' --output_filepath './output.html' 
+USAGE: python extract_user_facing_text_from_html.py --input_filepath './input.html' --output_filepath './output.html' 
 """
 
 import argparse
