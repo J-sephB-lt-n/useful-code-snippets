@@ -73,7 +73,7 @@ def arrange_images_in_grid(
     row_images: list[Image.Image] = []
     for image_row in image_rows:
         row_canvas = Image.new(
-            mode="RGB",
+            mode="RGBA",
             size=(
                 sum(
                     [image.size[0] for image in image_row]
@@ -92,7 +92,7 @@ def arrange_images_in_grid(
 
     # stack row images vertically to create the final image #
     final_canvas = Image.new(
-        mode="RGB",
+        mode="RGBA",
         size=(
             max(
                 [image.size[0] for image in row_images]
