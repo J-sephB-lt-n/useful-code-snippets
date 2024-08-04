@@ -1,8 +1,9 @@
 """
-TAGS: html|path|tags|traverse|walk
-DESCRIPTION: Walk recursively through an entire HTML document. This is typically useful when you want to process certain tags, and want to retain that tags position information within the overall document hierarchy (DOM). 
+TAGS: dom|enumerate|html|path|paths|structure|tag|tags|traverse|tree|walk
+DESCRIPTION: Walks recursively through entire HTML document, returning the full path leading to each tag.
 REQUIREMENTS: pip install beautifulsoup4 html5lib requests 
-USAGE: python traverse_html.py --url https://en.wikipedia.org/wiki/Art --output_path './output_example.json'
+USAGE: python enumerate_html_tag_paths.py --show_example 
+USAGE: python enumerate_html_tag_paths.py --url TODO --output_path example_output.json --show_html_at_terminal_tag --tags_of_interest img,svg
 """
 
 import argparse
@@ -12,28 +13,38 @@ from bs4 import BeautifulSoup
 import requests
 
 
-def traverse_html(
+def enumerate_html_tag_paths(
     soup_obj: BeautifulSoup,
-    include_terminal_tag_detail: bool,
+    show_html_at_terminal_tag: bool,
     capture_attributes: tuple[str, ...] = ("class", "id"),
     tags_of_interest: Optional[tuple[str, ...]] = None,
-) -> list[str]:
+) -> list[list[str]]:
     """Recursively traverses (walks) through all tags in the provided HTML document,
     reporting the full path from the document root to that tag
+
     Args:
         soup_obj (bs4.BeautifulSoup): The HTML document, parsed into a BeautifulSoup object
+        show_html_at_terminal_tag (bool): If true, shows the full HTML content of the last tag
+                                            in each path
         capture_attributes (tuple): These tag attributes will be reported in the output
                                     (for every tag in the path)
         tags_of_interest (tuple): If specified, only paths terminating with one of these
                                     tags will be included in the output
+
+    Returns:
+        list[list[str]]: A list containing the path (from the root tag) to each tag in the HTML document
     """
 
     def recurse(tag, path) -> None:
         """This function processes `tag` and then calls itself recursively on each
         of this tag's children
+
         Args:
             tag: Current HTML tag being processed
             path: List that keeps track of the tag names from the root to the current tag
+
+        Returns:
+            None: recurse() appends contents to the `paths` list
         """
         tag_repr: str = f"<{tag.name}"
         for attribute in capture_attributes:
@@ -43,7 +54,7 @@ def traverse_html(
                 else:
                     tag_repr += f' {attribute}="{tag.get(attribute)}"'
         tag_repr += ">"
-        if include_terminal_tag_detail:
+        if show_html_at_terminal_tag:
             full_repr: str = tag.prettify()
         else:
             full_repr = tag_repr
@@ -73,25 +84,24 @@ if __name__ == "__main__":
         required=False,
     )
     arg_parser.add_argument(
-        "-t",
-        "--include_terminal_tag_detail",
-        help="If included, the full HTML of the terminal tag in each path is included",
+        "-s",
+        "--show_html_at_terminal_tag",
+        help="Show the full HTML content of the last tag in each path",
         action="store_true",
     )
     arg_parser.add_argument(
-        "-b",
-        "--show_basic_example",
+        "-t",
+        "--tags_of_interest",
+        help="If specified, only paths terminating with one of these tags will be included in the output",
+    )
+    arg_parser.add_argument(
+        "-e",
+        "--show_example",
         help="Print a simple illustrative example to the terminal",
         action="store_true",
     )
-    arg_parser.add_argument(
-        "-c",
-        "--show_complex_example",
-        help="Print a comprehensive illustrative example to the terminal",
-        action="store_true",
-    )
     args = arg_parser.parse_args()
-    if args.show_basic_example or args.show_complex_example:
+    if args.show_example:
         example_html: str = """
 <html>
     <head>
@@ -109,36 +119,40 @@ if __name__ == "__main__":
 </html>
 """
         print("Traversing the following HTML (example_html):\n", example_html)
-
-    if args.show_basic_example:
         print(
             """>>> from bs4 import BeautifulSoup 
 >>> soup = BeautifulSoup(example_html, "html5lib")
->>> dom_paths: list[str] = traverse_html(
-...     soup, include_terminal_tag_detail=False
+>>> dom_paths: list[list[str]] = enumerate_html_tag_paths(
+...     soup, show_html_at_terminal_tag=False
 ... )
 >>> for path in dom_paths:
 ...     print(path)
         """
         )
         soup = BeautifulSoup(example_html, "html5lib")
-        dom_paths: list[str] = traverse_html(soup, include_terminal_tag_detail=False)
+        dom_paths: list[list[str]] = enumerate_html_tag_paths(
+            soup, show_html_at_terminal_tag=False
+        )
         for path in dom_paths:
             print(path)
         print(
             """
->>> dom_paths_only_h1_tags: list[str] = traverse_html(
-...     soup, include_terminal_tag_detail=False, tags_of_interest=("h1",)
+>>> dom_paths_only_h1_tags: list[list[str]] = enumerate_html_tag_paths(
+...     soup, show_html_at_terminal_tag=True, tags_of_interest=("h1",)
 ... )
 >>> for path in dom_paths_only_h1_tags:
-...     print(path)
+...     for depth, tag in enumerate(path):
+...         [print("\\t" * depth + line) for line in tag.split("\\n")]
+...     print("---")
 """
         )
-        dom_paths_only_h1_tags: list[str] = traverse_html(
-            soup, include_terminal_tag_detail=False, tags_of_interest=("h1",)
+        dom_paths_only_h1_tags: list[list[str]] = enumerate_html_tag_paths(
+            soup, show_html_at_terminal_tag=True, tags_of_interest=("h1",)
         )
         for path in dom_paths_only_h1_tags:
-            print(path)
+            for depth, tag in enumerate(path):
+                [print("\t" * depth + line) for line in tag.split("\n")]
+            print("---")
         exit()
     if not args.url or not args.output_path:
         raise ValueError("Please provide both arguments `--url` and `--output_path`")
@@ -153,3 +167,8 @@ if __name__ == "__main__":
             f"Received response [{url_response.status_code}] from {args.url}"
         )
     soup = BeautifulSoup(url_response.content, "html5lib")
+    tag_paths: list[list[str]] = enumerate_html_tag_paths(
+        soup_obj=soup,
+        show_html_at_terminal_tag=args.show_html_at_terminal_tag,
+        tags_of_interest=args.tags_of_interest,
+    )
