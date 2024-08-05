@@ -1,5 +1,5 @@
 """
-TAGS: blob|blobs|bucket|cloud|filepath|filepaths|gcloud|gcp|google|list|path|paths|prefix
+TAGS: blob|blobs|bucket|cloud|cloud storage|filepath|filepaths|gcloud|gcp|google|list|path|paths|prefix|storage
 DESCRIPTION: Lists all filepaths in the given google cloud storage bucket (possibly filtered by filepath prefix)
 REQUIREMENTS: pip install google-cloud-storage
 """
