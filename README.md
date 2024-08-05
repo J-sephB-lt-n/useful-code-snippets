@@ -50,6 +50,7 @@ snippets
     │   ├── bigquery_to_local_jsonl.py
     │   ├── bigquery_to_python.py
     │   ├── cloud_storage_to_python.py
+    │   ├── list_filepaths_in_cloud_storage_bucket.py
     │   ├── self_deleting_vm.py
     │   ├── upload_file_to_cloud_storage_bucket.py
     │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
@@ -82,5 +83,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-28 directories, 37 files
+27 directories, 38 files
 ```
