@@ -26,7 +26,7 @@ snippets
 │   │   ├── list_n_random_filenames_from_cloud_storage_bucket.sh
 │   │   └── setup_python_on_ec2_virtual_machine.sh
 │   ├── llm
-│   │   ├── host_local_models_with_llama_cpp.sh
+│   │   └── host_local_models_with_llama_cpp.sh
 │   └── ubuntu
 │       └── install_chrome_browser_on_ubuntu.sh
 ├── docker
@@ -57,16 +57,16 @@ snippets
     │   └── find_connected_node_paths.py
     ├── html
     │   ├── download_webpage_content_javascript_render.py
+    │   ├── enumerate_html_tag_paths.py
     │   ├── extract_css_from_webpage.py
     │   └── extract_user_facing_text_from_html.py
     ├── http
     │   └── flask
     │       └── programmatically_host_local_flask_app.md
     ├── image
+    │   ├── arrange_images_in_grid.py
     │   ├── extract_colour_palette_from_image.py
-    │   ├── extract_colour_palette_from_webpage.py
-    │   └── pillow
-    │       └── arrange_images_in_grid.py
+    │   └── extract_colour_palette_from_webpage.py
     ├── llm
     │   └── count_tokens_mistral_model.py
     ├── misc
@@ -82,5 +82,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-29 directories, 38 files
+28 directories, 37 files
 ```

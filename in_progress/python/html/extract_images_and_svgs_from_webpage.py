@@ -11,6 +11,10 @@ from bs4 import BeautifulSoup
 from PIL import Image
 
 
+def traverse_html(soup: BeautifulSoup):
+    """TODO"""
+
+
 def extract_images_svgs_from_html(html: bytes) -> tuple[Image.Image, ...]:
     """docstring TODO
 
@@ -33,5 +37,4 @@ if __name__ == "__main__":
     webpage_response = requests.get(
         url=args.url, timeout=10, headers={"User-Agent": "Definitely not a Script"}
     )
-
     extracted_images = extract_images_svgs_from_html(webpage_response.content)

@@ -3,10 +3,11 @@ TAGS: dom|enumerate|html|path|paths|structure|tag|tags|traverse|tree|walk
 DESCRIPTION: Walks recursively through entire HTML document, returning the full path leading to each tag.
 REQUIREMENTS: pip install beautifulsoup4 html5lib requests 
 USAGE: python enumerate_html_tag_paths.py --show_example 
-USAGE: python enumerate_html_tag_paths.py --url TODO --output_path example_output.json --show_html_at_terminal_tag --tags_of_interest img,svg
+USAGE: python enumerate_html_tag_paths.py --url https://en.wikipedia.org/wiki/Jazz --output_filepath example_output.json --tags_of_interest img,svg --show_html_at_terminal_tag
 """
 
 import argparse
+import json
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -78,7 +79,7 @@ if __name__ == "__main__":
     )
     arg_parser.add_argument(
         "-o",
-        "--output_path",
+        "--output_filepath",
         help="Path to file where output will be written (JSON file)",
         type=str,
         required=False,
@@ -154,8 +155,10 @@ if __name__ == "__main__":
                 [print("\t" * depth + line) for line in tag.split("\n")]
             print("---")
         exit()
-    if not args.url or not args.output_path:
-        raise ValueError("Please provide both arguments `--url` and `--output_path`")
+    if not args.url or not args.output_filepath:
+        raise ValueError(
+            "Please provide both arguments `--url` and `--output_filepath`"
+        )
 
     url_response = requests.get(
         args.url,
@@ -170,5 +173,7 @@ if __name__ == "__main__":
     tag_paths: list[list[str]] = enumerate_html_tag_paths(
         soup_obj=soup,
         show_html_at_terminal_tag=args.show_html_at_terminal_tag,
-        tags_of_interest=args.tags_of_interest,
+        tags_of_interest=args.tags_of_interest.split(","),
     )
+    with open(args.output_filepath, "w", encoding="utf-8") as file:
+        json.dump(obj=tag_paths, fp=file, indent=4)
