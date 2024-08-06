@@ -31,7 +31,7 @@ def log_function_call(logging_func: Callable, log_args: bool):
                                 if isinstance(arg, str) and len(arg) > 50
                                 else (
                                     f"'{arg}'"
-                                    if isinstance(arg, str) and len(arg) > 50
+                                    if isinstance(arg, str) and len(arg)
                                     else str(arg)
                                 )
                             )
