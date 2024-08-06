@@ -28,32 +28,16 @@ def log_function_call(logging_func: Callable, log_args: bool):
                         [
                             (
                                 f"'{str(arg)[:100]}...'"
-                                if isinstance(arg, str) and len(arg) > 100
-                                else (
-                                    f"'{arg}'"
-                                    if isinstance(arg, str)
-                                    else (
-                                        f"{str(arg)[:100]}..."
-                                        if len(str(arg)) > 100
-                                        else str(arg)
-                                    )
-                                )
+                                if len(str(arg)) > 100
+                                else f"'{arg}'" if isinstance(arg, str) else str(arg)
                             )
                             for arg in args
                         ]
                         + [
                             (
                                 f"{k}='{str(v)[:100]}...'"
-                                if isinstance(v, str) and len(v) > 100
-                                else (
-                                    f"{k}='{v}'"
-                                    if isinstance(v, str)
-                                    else (
-                                        f"{k}={str(v)[:100]}"
-                                        if len(str(v)) > 100
-                                        else f"{k}={v}"
-                                    )
-                                )
+                                if len(str(v)) > 100
+                                else f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
                             )
                             for k, v in kwargs.items()
                         ]
