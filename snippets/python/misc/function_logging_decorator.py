@@ -26,11 +26,23 @@ def log_function_call(logging_func: Callable, log_args: bool):
                     wrapped_func.__name__,
                     ", ".join(
                         [
-                            f"'{arg}'" if isinstance(arg, str) else str(arg)
+                            (
+                                f"'{arg[:50]}...'"
+                                if isinstance(arg, str) and len(arg) > 50
+                                else (
+                                    f"'{arg}'"
+                                    if isinstance(arg, str) and len(arg) > 50
+                                    else str(arg)
+                                )
+                            )
                             for arg in args
                         ]
                         + [
-                            f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
+                            (
+                                f"{k}='{v[:50]}...'"
+                                if isinstance(v, str) and len(v) > 50
+                                else f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
+                            )
                             for k, v in kwargs.items()
                         ]
                     ),
