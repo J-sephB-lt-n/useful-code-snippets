@@ -27,7 +27,7 @@ def log_function_call(logging_func: Callable, log_args: bool):
                     ", ".join(
                         [
                             (
-                                f"'{arg[:50]}...'"
+                                f"'{arg[:100]}...'"
                                 if isinstance(arg, str) and len(arg) > 50
                                 else (
                                     f"'{arg}'"
@@ -39,7 +39,7 @@ def log_function_call(logging_func: Callable, log_args: bool):
                         ]
                         + [
                             (
-                                f"{k}='{v[:50]}...'"
+                                f"{k}='{v[:100]}...'"
                                 if isinstance(v, str) and len(v) > 50
                                 else f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
                             )
