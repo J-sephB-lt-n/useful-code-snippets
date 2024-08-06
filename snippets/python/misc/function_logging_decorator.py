@@ -27,20 +27,16 @@ def log_function_call(logging_func: Callable, log_args: bool):
                     ", ".join(
                         [
                             (
-                                f"'{arg[:100]}...'"
-                                if isinstance(arg, str) and len(arg) > 100
-                                else (
-                                    f"'{arg}'"
-                                    if isinstance(arg, str) and len(arg)
-                                    else str(arg)
-                                )
+                                f"'{str(arg)[:100]}...'"
+                                if hasattr(arg, "__len__") and len(arg) > 100
+                                else (f"'{arg}'" if isinstance(arg, str) else str(arg))
                             )
                             for arg in args
                         ]
                         + [
                             (
-                                f"{k}='{v[:100]}...'"
-                                if isinstance(v, str) and len(v) > 100
+                                f"{k}='{str(v)[:100]}...'"
+                                if hasattr(v, "__len__") and len(v) > 100
                                 else f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
                             )
                             for k, v in kwargs.items()
