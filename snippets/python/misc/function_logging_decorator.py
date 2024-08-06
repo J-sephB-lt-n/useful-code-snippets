@@ -28,7 +28,7 @@ def log_function_call(logging_func: Callable, log_args: bool):
                         [
                             (
                                 f"'{arg[:100]}...'"
-                                if isinstance(arg, str) and len(arg) > 50
+                                if isinstance(arg, str) and len(arg) > 100
                                 else (
                                     f"'{arg}'"
                                     if isinstance(arg, str) and len(arg)
@@ -40,7 +40,7 @@ def log_function_call(logging_func: Callable, log_args: bool):
                         + [
                             (
                                 f"{k}='{v[:100]}...'"
-                                if isinstance(v, str) and len(v) > 50
+                                if isinstance(v, str) and len(v) > 100
                                 else f"{k}='{v}'" if isinstance(v, str) else f"{k}={v}"
                             )
                             for k, v in kwargs.items()
