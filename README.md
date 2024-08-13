@@ -29,6 +29,8 @@ snippets
 │   │   └── host_local_models_with_llama_cpp.sh
 │   └── ubuntu
 │       └── install_chrome_browser_on_ubuntu.sh
+├── css
+│   └── tooltips.html
 ├── docker
 │   └── python
 │       └── install_chrome_browser_in_python_docker_container
@@ -73,6 +75,7 @@ snippets
     ├── misc
     │   ├── code_section_timer.py
     │   ├── dict_pretty_print.py
+    │   ├── function_logging_decorator.py
     │   └── function_retry_wrapper.py
     ├── nlp
     │   └── text_to_bag_of_words_nltk.py
@@ -83,5 +86,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-27 directories, 38 files
+28 directories, 40 files
 ```
