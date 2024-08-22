@@ -33,6 +33,7 @@ snippets
 │   └── tooltips.html
 ├── docker
 │   └── python
+│       ├── flask_app_on_cloud_run.md
 │       └── install_chrome_browser_in_python_docker_container
 └── python
     ├── dashboard
@@ -65,7 +66,8 @@ snippets
     │   └── extract_user_facing_text_from_html.py
     ├── http
     │   └── flask
-    │       └── programmatically_host_local_flask_app.md
+    │       ├── programmatically_host_local_flask_app.md
+    │       └── simple_auth_decorator.md
     ├── image
     │   ├── arrange_images_in_grid.py
     │   ├── extract_colour_palette_from_image.py
@@ -86,5 +88,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-28 directories, 40 files
+28 directories, 42 files
 ```
