@@ -32,8 +32,9 @@ snippets
 ├── css
 │   └── tooltips.html
 ├── docker
+│   ├── gcp
+│   │   └── flask_app_on_cloud_run.md
 │   └── python
-│       ├── flask_app_on_cloud_run.md
 │       └── install_chrome_browser_in_python_docker_container
 └── python
     ├── dashboard
@@ -88,5 +89,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-28 directories, 42 files
+29 directories, 42 files
 ```
