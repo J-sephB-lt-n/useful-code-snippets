@@ -78,6 +78,7 @@ snippets
     ├── misc
     │   ├── code_section_timer.py
     │   ├── dict_pretty_print.py
+    │   ├── dynamic_logger_format.py
     │   ├── function_logging_decorator.py
     │   └── function_retry_wrapper.py
     ├── nlp
@@ -89,5 +90,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-29 directories, 42 files
+29 directories, 43 files
 ```
