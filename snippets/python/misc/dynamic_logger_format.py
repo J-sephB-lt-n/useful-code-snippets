@@ -1,6 +1,7 @@
 """
 TAGS: change|dynamic|format|log|logging|logger
 DESCRIPTION: Code for dynamically changing the format of a python logger mid-script
+NOTES: I have a more integrated example of this functionality here: https://github.com/J-sephB-lt-n/my-python-logging-setup
 """
 
 import logging

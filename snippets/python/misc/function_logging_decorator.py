@@ -2,6 +2,7 @@
 TAGS: decorate|decorating|decorator|log|logger|logging|wrap|wrapper
 DESCRIPTION: Decorator used to log function calling (in order to declutter the calling code)
 USAGE: See end of this script (if __name__=="__main__") for example usage
+NOTES: I have an improved version of this decorator function here: https://github.com/J-sephB-lt-n/my-python-logging-setup
 """
 
 import logging
