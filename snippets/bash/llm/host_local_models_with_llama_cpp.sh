@@ -20,6 +20,7 @@ curl -X POST http://localhost:8080/completion \
   -d '{
   "prompt": "Once upon a time",
   "n_predict": 50,
-  "temperature": 0.0 
+  "temperature": 0.0,
+  "stream": true
 }'
 # Llama-server documentation here: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
