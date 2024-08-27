@@ -60,6 +60,8 @@ snippets
     │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
     ├── graph
     │   └── find_connected_node_paths.py
+    ├── gui
+    │   └── interactive_file_picker.py
     ├── html
     │   ├── download_webpage_content_javascript_render.py
     │   ├── enumerate_html_tag_paths.py
@@ -74,7 +76,8 @@ snippets
     │   ├── extract_colour_palette_from_image.py
     │   └── extract_colour_palette_from_webpage.py
     ├── llm
-    │   └── count_tokens_mistral_model.py
+    │   ├── count_tokens_mistral_model.py
+    │   └── streaming_llama_cpp_response.py
     ├── misc
     │   ├── code_section_timer.py
     │   ├── dict_pretty_print.py
@@ -90,5 +93,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-29 directories, 43 files
+30 directories, 45 files
 ```
