@@ -47,6 +47,8 @@ snippets
     │       └── streamlit_on_gcp_cloud_run.md
     ├── data
     │   └── native_groupby_agg.py
+    ├── database
+    │   └── basic_shelve_usage.py
     ├── email
     │   └── extract_info_from_mime_string.py
     ├── gcp
@@ -93,5 +95,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-30 directories, 45 files
+31 directories, 46 files
 ```
