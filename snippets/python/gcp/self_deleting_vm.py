@@ -1,5 +1,5 @@
 """
-TAGS: compute|compute engine|delete|deleting|gcp|google|google cloud|kill|killing|myself|self|suicide|vm 
+TAGS: compute|compute engine|delete|deleting|gcp|google|google cloud|kill|killing|myself|self|suicide|virtual machine|vm
 DESCRIPTION: Running this sript on a Google Cloud Virtual Machine (VM) will make it delete itself 
 REQUIREMENTS: (if pip available) pip install google-auth requests
 REQUIREMENTS: (on ubuntu, no pip available) apt install python3-pip python3-requests python3-google-auth -y
