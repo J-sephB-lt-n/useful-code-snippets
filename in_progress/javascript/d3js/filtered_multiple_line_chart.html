@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>This title appears in browser title bar and in search results</title>
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <style>
+      .content-box {
+        border: 2px solid black;
+        margin: 50px;
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Adds a subtle shadow */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-box">
+      <h2>Simulation Controls</h2>
+      <input type="number" id="random-seed" placeholder="Enter random seed" />
+      <input type="number" id="n-brands" placeholder="Number of brands" />
+      <input
+        type="number"
+        id="n-data-points"
+        placeholder="Number of data points"
+      />
+      <button id="simulate-data-button" onclick="newData()">
+        Simulate Data
+      </button>
+    </div>
+    <div class="content-box">
+      <h2>Data Filters</h2>
+      <label for="select-brand">Select a brand:</label>
+      <select id="select-brand" name="options"></select>
+      <button id="apply-filters-button" onclick="filterData()">
+        Apply Filters
+      </button>
+    </div>
+  </body>
+  <script>
+    function generateRandomData(n_brands, num_data_points, seed) {
+      const channels = ["wholesale", "online", "retail"];
+      const brands = Array.from(
+        { length: n_brands },
+        (_, i) => `brand ${String.fromCharCode(65 + i)}`,
+      );
+
+      // Seeded random number generator
+      function seededRandom() {
+        const x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+      }
+
+      // Generate random data
+      let data = [];
+      let amountTrackers = {}; // to track last amount for each brand-channel combo
+
+      for (let i = 0; i < num_data_points; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (num_data_points - 1 - i));
+
+        brands.forEach((brand) => {
+          channels.forEach((channel) => {
+            const key = `${brand}-${channel}`;
+            if (!amountTrackers[key]) {
+              amountTrackers[key] = 100 + (seededRandom() - 0.5) * 50; // starting amount
+            }
+
+            // Random walk step
+            const change = (seededRandom() - 0.5) * 10;
+            amountTrackers[key] += change;
+
+            const record = {
+              date: date.toISOString().split("T")[0],
+              brand: brand,
+              channel: channel,
+              amount: Math.round(amountTrackers[key] * 100) / 100, // round to 2 decimal places
+            };
+            data.push(record);
+          });
+        });
+      }
+
+      let selectBrand = document.getElementById("select-brand");
+      selectBrand.innerHTML = "";
+      brands.forEach((brand) => {
+        const optionElement = document.createElement("option");
+        optionElement.value = brand;
+        optionElement.text = brand;
+        selectBrand.append(optionElement);
+      });
+
+      return data;
+    }
+
+    let data = [];
+    let filteredData = [];
+
+    function newData() {
+      const nBrands = parseInt(document.getElementById("n-brands").value);
+      const nDataPoints = parseInt(
+        document.getElementById("n-data-points").value,
+      );
+      const randomSeed = parseInt(document.getElementById("random-seed").value);
+      data = generateRandomData(nBrands, nDataPoints, randomSeed);
+      console.log(data);
+    }
+  </script>
+</html>
