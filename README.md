@@ -36,6 +36,9 @@ snippets
 │   │   └── flask_app_on_cloud_run.md
 │   └── python
 │       └── install_chrome_browser_in_python_docker_container
+├── javascript
+│   └── d3js
+│       └── simple_line_chart.html
 └── python
     ├── dashboard
     │   ├── dash
@@ -53,6 +56,7 @@ snippets
     │   └── extract_info_from_mime_string.py
     ├── gcp
     │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
+    │   ├── authorizing_rest_api_calls_to_gcp_resources.py
     │   ├── bigquery_to_local_jsonl.py
     │   ├── bigquery_to_python.py
     │   ├── cloud_storage_to_python.py
@@ -82,6 +86,7 @@ snippets
     │   └── streaming_llama_cpp_response.py
     ├── misc
     │   ├── code_section_timer.py
+    │   ├── create_wordbased_id.py
     │   ├── dict_pretty_print.py
     │   ├── dynamic_logger_format.py
     │   ├── function_logging_decorator.py
@@ -95,5 +100,5 @@ snippets
     └── stats
         └── find_best_fitting_univariate_distribution.py
 
-31 directories, 46 files
+33 directories, 49 files
 ```
