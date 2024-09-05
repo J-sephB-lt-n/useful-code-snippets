@@ -56,7 +56,7 @@ Please write me a javascript function which simulates random data of this form:
 
       <details style="display: inline">
         <summary>Brand</summary>
-        <form>
+        <form id="brand-filter">
           <fieldset>
             <ul>
               <li>
@@ -92,8 +92,8 @@ Please write me a javascript function which simulates random data of this form:
         </form>
       </details>
       <details style="display: inline">
-        <summary>Brand</summary>
-        <form>
+        <summary>Location</summary>
+        <form id="location-filter">
           <fieldset>
             <ul>
               <li>
@@ -128,8 +128,8 @@ Please write me a javascript function which simulates random data of this form:
         </form>
       </details>
       <details style="display: inline">
-        <summary>Brand</summary>
-        <form>
+        <summary>Channel</summary>
+        <form id="channel-filter">
           <fieldset>
             <ul>
               <li>
@@ -163,12 +163,16 @@ Please write me a javascript function which simulates random data of this form:
           </fieldset>
         </form>
       </details>
-      <button id="apply-filters-button" onclick="filterData()">
+      <button id="clear-filters-button" onclick="clearFilters()">
         Clear Filters
       </button>
     </div>
   </body>
   <script>
+    let data = [];
+    let filteredData = [];
+    let allPossibleFieldValues = { location: {}, brand: {}, channel: {} };
+
     function seededRandom(seed) {
       let m = 0x80000000; // 2^31
       let a = 1103515245;
@@ -250,6 +254,27 @@ Please write me a javascript function which simulates random data of this form:
       );
       const randomSeed = parseInt(document.getElementById("random-seed").value);
       data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
+
+      // populate struct `allPossibleFieldValues`
+      data.forEach((row) => {
+        ["location", "brand", "channel"].forEach((field) => {
+          if (!(row[field] in allPossibleFieldValues[field])) {
+            allPossibleFieldValues[field][row[field]] = true;
+          }
+        });
+      });
+
+      // sort values within each key of `allPossibleFieldValues`
+      ["location", "brand", "channel"].forEach((field) => {
+        allPossibleFieldValues[field] = Object.keys(
+          allPossibleFieldValues[field],
+        )
+          .sort()
+          .reduce((obj, key) => {
+            obj[key] = true;
+            return obj;
+          }, {});
+      });
     }
   </script>
 </html>
