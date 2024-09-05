@@ -1,4 +1,23 @@
 <!doctype html>
+<!-- 
+Please write me a javascript function which simulates random data of this form:
+[
+    {"date": ..., "brand": ..., "channel:", ..., "location": ..., "amount"},
+    {"date": ..., "brand": ..., "channel:", ..., "location": ..., "amount"},
+    {"date": ..., "brand": ..., "channel:", ..., "location": ..., "amount"},
+    ...
+]
+
+* Please make 'number of brands' a function input. e.g. n_brands=3 will result in brands "brand A", "brand B" and "brand C"
+* Please make 'number of locations' a function input e.g. n_locations=4 will result in locations "area 1", "area 2", "area 3" and "area 4"
+* Please make number of data points a function input
+* The universe of possible channels are {"wholesale", "online", "retail", "3rd-party"}
+* At the beginning, randomly assign to each brand a set of areas (between 1 and the total number of potential areas) and also a set of channels (between 1 and the total number of potential channels).
+* Please generate daily data
+* There must be exactly 1 observation (data point) generated per channel per brand per area per day
+* Within each channel, brand, area combination, please make the data random walk
+* Function must include a random seed as input - same seed guarantees same output
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,6 +26,7 @@
     <title>This title appears in browser title bar and in search results</title>
     <link rel="stylesheet" href="./style.css" />
     <link rel="icon" href="./favicon.ico" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <style>
       .content-box {
         border: 2px solid black;
@@ -21,6 +41,7 @@
       <h2>Simulation Controls</h2>
       <input type="number" id="random-seed" placeholder="Enter random seed" />
       <input type="number" id="n-brands" placeholder="Number of brands" />
+      <input type="number" id="n-locations" placeholder="Number of locations" />
       <input
         type="number"
         id="n-data-points"
@@ -32,80 +53,203 @@
     </div>
     <div class="content-box">
       <h2>Data Filters</h2>
-      <label for="select-brand">Select a brand:</label>
-      <select id="select-brand" name="options"></select>
+
+      <details style="display: inline">
+        <summary>Brand</summary>
+        <form>
+          <fieldset>
+            <ul>
+              <li>
+                <label for="bmw"
+                  >BMW<input type="checkbox" id="bmw" name="bmw" value="bmw"
+                /></label>
+              </li>
+              <li>
+                <label for="citroen" style="color: grey"
+                  >Citroen
+                  <input
+                    disabled
+                    type="checkbox"
+                    id="citroen"
+                    name="citroen"
+                    value="citroen"
+                /></label>
+              </li>
+              <li>
+                <label for="skoda"
+                  >Skoda
+                  <input type="checkbox" id="skoda" name="skoda" value="skoda"
+                /></label>
+              </li>
+              <li>
+                <label for="volvo"
+                  >Volvo
+                  <input type="checkbox" id="volvo" name="volvo" value="volvo"
+                /></label>
+              </li>
+            </ul>
+          </fieldset>
+        </form>
+      </details>
+      <details style="display: inline">
+        <summary>Brand</summary>
+        <form>
+          <fieldset>
+            <ul>
+              <li>
+                <label for="bmw"
+                  >BMW<input type="checkbox" id="bmw" name="bmw" value="bmw"
+                /></label>
+              </li>
+              <li>
+                <label for="citroen"
+                  >Citroen
+                  <input
+                    type="checkbox"
+                    id="citroen"
+                    name="citroen"
+                    value="citroen"
+                /></label>
+              </li>
+              <li>
+                <label for="skoda"
+                  >Skoda
+                  <input type="checkbox" id="skoda" name="skoda" value="skoda"
+                /></label>
+              </li>
+              <li>
+                <label for="volvo"
+                  >Volvo
+                  <input type="checkbox" id="volvo" name="volvo" value="volvo"
+                /></label>
+              </li>
+            </ul>
+          </fieldset>
+        </form>
+      </details>
+      <details style="display: inline">
+        <summary>Brand</summary>
+        <form>
+          <fieldset>
+            <ul>
+              <li>
+                <label for="bmw"
+                  >BMW<input type="checkbox" id="bmw" name="bmw" value="bmw"
+                /></label>
+              </li>
+              <li>
+                <label for="citroen"
+                  >Citroen
+                  <input
+                    type="checkbox"
+                    id="citroen"
+                    name="citroen"
+                    value="citroen"
+                /></label>
+              </li>
+              <li>
+                <label for="skoda"
+                  >Skoda
+                  <input type="checkbox" id="skoda" name="skoda" value="skoda"
+                /></label>
+              </li>
+              <li>
+                <label for="volvo"
+                  >Volvo
+                  <input type="checkbox" id="volvo" name="volvo" value="volvo"
+                /></label>
+              </li>
+            </ul>
+          </fieldset>
+        </form>
+      </details>
       <button id="apply-filters-button" onclick="filterData()">
-        Apply Filters
+        Clear Filters
       </button>
     </div>
   </body>
   <script>
-    function generateRandomData(n_brands, num_data_points, seed) {
-      const channels = ["wholesale", "online", "retail"];
+    function seededRandom(seed) {
+      let m = 0x80000000; // 2^31
+      let a = 1103515245;
+      let c = 12345;
+      let state = seed ? seed : Math.floor(Math.random() * (m - 1));
+
+      return function () {
+        state = (a * state + c) % m;
+        return state / (m - 1);
+      };
+    }
+
+    function generateRandomData(n_brands, n_locations, num_days, seed) {
+      const channels = ["wholesale", "online", "retail", "3rd-party"];
+      const rand = seededRandom(seed);
+
+      // Generate brand names
       const brands = Array.from(
         { length: n_brands },
         (_, i) => `brand ${String.fromCharCode(65 + i)}`,
       );
+      // Generate location names
+      const locations = Array.from(
+        { length: n_locations },
+        (_, i) => `area ${i + 1}`,
+      );
 
-      // Seeded random number generator
-      function seededRandom() {
-        const x = Math.sin(seed++) * 10000;
-        return x - Math.floor(x);
+      // Randomly assign channels and locations to each brand
+      const brandAssignments = brands.map((brand) => {
+        const brandChannels = channels.filter(
+          () => rand() < 0.5 || channels.length === 1,
+        ); // at least 1 channel
+        const brandLocations = locations.filter(
+          () => rand() < 0.5 || locations.length === 1,
+        ); // at least 1 location
+        return { brand, channels: brandChannels, locations: brandLocations };
+      });
+
+      // Function to simulate random walk
+      function randomWalk(prevValue) {
+        return prevValue + (rand() - 0.5) * 10; // Random movement with a max step of 10
       }
 
-      // Generate random data
-      let data = [];
-      let amountTrackers = {}; // to track last amount for each brand-channel combo
+      // Generate data for each day
+      const data = [];
+      for (let day = 0; day < num_days; day++) {
+        const currentDate = new Date();
+        currentDate.setDate(currentDate.getDate() + day);
+        const dateStr = currentDate.toISOString().split("T")[0]; // YYYY-MM-DD format
 
-      for (let i = 0; i < num_data_points; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - (num_data_points - 1 - i));
-
-        brands.forEach((brand) => {
-          channels.forEach((channel) => {
-            const key = `${brand}-${channel}`;
-            if (!amountTrackers[key]) {
-              amountTrackers[key] = 100 + (seededRandom() - 0.5) * 50; // starting amount
-            }
-
-            // Random walk step
-            const change = (seededRandom() - 0.5) * 10;
-            amountTrackers[key] += change;
-
-            const record = {
-              date: date.toISOString().split("T")[0],
-              brand: brand,
-              channel: channel,
-              amount: Math.round(amountTrackers[key] * 100) / 100, // round to 2 decimal places
-            };
-            data.push(record);
+        // Generate data for each brand
+        brandAssignments.forEach(({ brand, channels, locations }) => {
+          locations.forEach((location) => {
+            channels.forEach((channel) => {
+              let prevAmount = 100; // Starting value for random walk
+              for (let i = 0; i < locations.length; i++) {
+                prevAmount = randomWalk(prevAmount);
+                data.push({
+                  date: dateStr,
+                  brand: brand,
+                  channel: channel,
+                  location: location,
+                  amount: Math.max(0, Math.round(prevAmount * 100) / 100), // Ensure non-negative values
+                });
+              }
+            });
           });
         });
       }
 
-      let selectBrand = document.getElementById("select-brand");
-      selectBrand.innerHTML = "";
-      brands.forEach((brand) => {
-        const optionElement = document.createElement("option");
-        optionElement.value = brand;
-        optionElement.text = brand;
-        selectBrand.append(optionElement);
-      });
-
       return data;
     }
 
-    let data = [];
-    let filteredData = [];
-
     function newData() {
       const nBrands = parseInt(document.getElementById("n-brands").value);
+      const nLocations = parseInt(document.getElementById("n-locations").value);
       const nDataPoints = parseInt(
         document.getElementById("n-data-points").value,
       );
       const randomSeed = parseInt(document.getElementById("random-seed").value);
-      data = generateRandomData(nBrands, nDataPoints, randomSeed);
-      console.log(data);
+      data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
     }
   </script>
 </html>
