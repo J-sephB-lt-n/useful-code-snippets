@@ -1,5 +1,5 @@
 ```
-TAGS: api|cloud run|endpoint|flask|gcloud|gcp|google|google cloud|gunicorn|lambda|microservice|microservices|serverless|rest|run
+TAGS: api|build|cloud run|deploy|endpoint|flask|gcloud|gcp|google|google cloud|gunicorn|lambda|microservice|microservices|serverless|rest|run
 DESCRIPTION: Boilerplate code for deploying a python Flask app on Google Cloud Run service
 ```
 
