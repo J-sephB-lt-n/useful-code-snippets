@@ -54,114 +54,62 @@ Please write me a javascript function which simulates random data of this form:
     <div class="content-box">
       <h2>Data Filters</h2>
 
-      <details style="display: inline">
-        <summary>Brand</summary>
+      <!-- 
+let currentFilterSelection = {
+    // record of which filter checkboxes are ticked
+    "brand": {
+        "brand A": true,
+        "brand B": false 
+    },
+    "channel": {
+        "online": true,
+        "wholesale": true
+    },
+    "location": {
+        "area 1": false, 
+        "area 2": true
+    }
+}
+
+Please will you give me a javascript function populateFilters() which uses currentFilterSelection to populate the form filters. e.g. I want form with id "brand-filter" to populate like this:
         <form id="brand-filter">
           <fieldset>
             <ul>
               <li>
-                <label for="bmw"
-                  >BMW<input type="checkbox" id="bmw" name="bmw" value="bmw"
-                /></label>
-              </li>
-              <li>
-                <label for="citroen" style="color: grey"
-                  >Citroen
-                  <input
-                    disabled
+                <label for="brand-a"
+                  >Brand A<input
                     type="checkbox"
-                    id="citroen"
-                    name="citroen"
-                    value="citroen"
+                    id="brand-a"
+                    name="brand-a"
+                    value="brand-a"
+                    checked
                 /></label>
               </li>
               <li>
-                <label for="skoda"
-                  >Skoda
-                  <input type="checkbox" id="skoda" name="skoda" value="skoda"
-                /></label>
-              </li>
-              <li>
-                <label for="volvo"
-                  >Volvo
-                  <input type="checkbox" id="volvo" name="volvo" value="volvo"
+                <label for="brand-b"
+                  >Brand B
+                  <input
+                    type="checkbox"
+                    id="brand-b"
+                    name="brand-b"
+                    value="brand-b"
                 /></label>
               </li>
             </ul>
           </fieldset>
         </form>
+-->
+      <details style="display: inline">
+        <summary>Brand</summary>
+        <form id="brand-filter"></form>
       </details>
       <details style="display: inline">
         <summary>Location</summary>
-        <form id="location-filter">
-          <fieldset>
-            <ul>
-              <li>
-                <label for="bmw"
-                  >BMW<input type="checkbox" id="bmw" name="bmw" value="bmw"
-                /></label>
-              </li>
-              <li>
-                <label for="citroen"
-                  >Citroen
-                  <input
-                    type="checkbox"
-                    id="citroen"
-                    name="citroen"
-                    value="citroen"
-                /></label>
-              </li>
-              <li>
-                <label for="skoda"
-                  >Skoda
-                  <input type="checkbox" id="skoda" name="skoda" value="skoda"
-                /></label>
-              </li>
-              <li>
-                <label for="volvo"
-                  >Volvo
-                  <input type="checkbox" id="volvo" name="volvo" value="volvo"
-                /></label>
-              </li>
-            </ul>
-          </fieldset>
-        </form>
+        <form id="location-filter"></form>
       </details>
       <details style="display: inline">
         <summary>Channel</summary>
-        <form id="channel-filter">
-          <fieldset>
-            <ul>
-              <li>
-                <label for="bmw"
-                  >BMW<input type="checkbox" id="bmw" name="bmw" value="bmw"
-                /></label>
-              </li>
-              <li>
-                <label for="citroen"
-                  >Citroen
-                  <input
-                    type="checkbox"
-                    id="citroen"
-                    name="citroen"
-                    value="citroen"
-                /></label>
-              </li>
-              <li>
-                <label for="skoda"
-                  >Skoda
-                  <input type="checkbox" id="skoda" name="skoda" value="skoda"
-                /></label>
-              </li>
-              <li>
-                <label for="volvo"
-                  >Volvo
-                  <input type="checkbox" id="volvo" name="volvo" value="volvo"
-                /></label>
-              </li>
-            </ul>
-          </fieldset>
-        </form>
+        <form id="channel-filter"></form>
       </details>
       <button id="clear-filters-button" onclick="clearFilters()">
         Clear Filters
@@ -171,9 +119,10 @@ Please write me a javascript function which simulates random data of this form:
   <script>
     let data = [];
     let filteredData = [];
-    let allPossibleFieldValues = { location: {}, brand: {}, channel: {} };
+    let currentFilterSelection = { location: {}, brand: {}, channel: {} };
 
     function seededRandom(seed) {
+      // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
       let m = 0x80000000; // 2^31
       let a = 1103515245;
       let c = 12345;
@@ -186,6 +135,7 @@ Please write me a javascript function which simulates random data of this form:
     }
 
     function generateRandomData(n_brands, n_locations, num_days, seed) {
+      // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
       const channels = ["wholesale", "online", "retail", "3rd-party"];
       const rand = seededRandom(seed);
 
@@ -246,7 +196,60 @@ Please write me a javascript function which simulates random data of this form:
       return data;
     }
 
+    function populateFilters() {
+      // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
+      for (const [filterCategory, filterOptions] of Object.entries(
+        currentFilterSelection,
+      )) {
+        // Create the form ID dynamically based on the category (e.g., "brand-filter")
+        const formId = `${filterCategory}-filter`;
+        const form = document.getElementById(formId);
+
+        if (form) {
+          // Clear any existing content in the form
+          form.innerHTML = "";
+
+          // Create fieldset and unordered list elements
+          const fieldset = document.createElement("fieldset");
+          const ul = document.createElement("ul");
+
+          for (const [option, isChecked] of Object.entries(filterOptions)) {
+            // Create list item, label, and input elements
+            const li = document.createElement("li");
+            const label = document.createElement("label");
+            const input = document.createElement("input");
+
+            // Format the label and input ids/names to be lowercase and hyphenated
+            const idValue = option.toLowerCase().replace(/\s+/g, "-");
+
+            // Set up the label
+            label.setAttribute("for", idValue);
+            label.textContent = option;
+
+            // Set up the checkbox input
+            input.type = "checkbox";
+            input.id = idValue;
+            input.name = idValue;
+            input.value = idValue;
+            input.checked = isChecked;
+
+            // Append the input to the label, and the label to the list item
+            label.appendChild(input);
+            li.appendChild(label);
+
+            // Append the list item to the unordered list
+            ul.appendChild(li);
+          }
+
+          // Append the unordered list to the fieldset and the fieldset to the form
+          fieldset.appendChild(ul);
+          form.appendChild(fieldset);
+        }
+      }
+    }
+
     function newData() {
+      // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
       const nBrands = parseInt(document.getElementById("n-brands").value);
       const nLocations = parseInt(document.getElementById("n-locations").value);
       const nDataPoints = parseInt(
@@ -255,19 +258,19 @@ Please write me a javascript function which simulates random data of this form:
       const randomSeed = parseInt(document.getElementById("random-seed").value);
       data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
 
-      // populate struct `allPossibleFieldValues`
+      // populate struct `currentFilterSelection`
       data.forEach((row) => {
         ["location", "brand", "channel"].forEach((field) => {
-          if (!(row[field] in allPossibleFieldValues[field])) {
-            allPossibleFieldValues[field][row[field]] = true;
+          if (!(row[field] in currentFilterSelection[field])) {
+            currentFilterSelection[field][row[field]] = true;
           }
         });
       });
 
-      // sort values within each key of `allPossibleFieldValues`
+      // sort values within each key of `currentFilterSelection`
       ["location", "brand", "channel"].forEach((field) => {
-        allPossibleFieldValues[field] = Object.keys(
-          allPossibleFieldValues[field],
+        currentFilterSelection[field] = Object.keys(
+          currentFilterSelection[field],
         )
           .sort()
           .reduce((obj, key) => {
@@ -275,6 +278,8 @@ Please write me a javascript function which simulates random data of this form:
             return obj;
           }, {});
       });
+
+      populateFilters();
     }
   </script>
 </html>
