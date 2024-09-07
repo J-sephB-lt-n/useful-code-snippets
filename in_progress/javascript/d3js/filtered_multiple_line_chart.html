@@ -238,18 +238,9 @@ Please will you give me a javascript function populateFilters() which uses curre
       }
     }
 
-    function newData() {
-      // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
-      const nBrands = parseInt(document.getElementById("n-brands").value);
-      const nLocations = parseInt(document.getElementById("n-locations").value);
-      const nDataPoints = parseInt(
-        document.getElementById("n-data-points").value,
-      );
-      const randomSeed = parseInt(document.getElementById("random-seed").value);
-      data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
+    function clearFilters() {
       currentFilterSelection = { location: {}, brand: {}, channel: {} };
 
-      // populate struct `currentFilterSelection`
       data.forEach((row) => {
         ["location", "brand", "channel"].forEach((field) => {
           if (!(row[field] in currentFilterSelection[field])) {
@@ -258,7 +249,6 @@ Please will you give me a javascript function populateFilters() which uses curre
         });
       });
 
-      // sort values within each key of `currentFilterSelection`
       ["location", "brand", "channel"].forEach((field) => {
         currentFilterSelection[field] = Object.keys(
           currentFilterSelection[field],
@@ -271,6 +261,19 @@ Please will you give me a javascript function populateFilters() which uses curre
       });
 
       populateFilterForms();
+    }
+
+    function newData() {
+      // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
+      const nBrands = parseInt(document.getElementById("n-brands").value);
+      const nLocations = parseInt(document.getElementById("n-locations").value);
+      const nDataPoints = parseInt(
+        document.getElementById("n-data-points").value,
+      );
+      const randomSeed = parseInt(document.getElementById("random-seed").value);
+      data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
+
+      clearFilters();
     }
   </script>
 </html>
