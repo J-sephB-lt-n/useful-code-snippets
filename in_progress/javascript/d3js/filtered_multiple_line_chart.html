@@ -224,7 +224,7 @@ Please will you give me a javascript function populateFilters() which uses curre
             // Set up the checkbox input
             input.type = "checkbox";
             input.id = idValue;
-            input.name = idValue;
+            input.name = option;
             input.value = idValue;
             input.checked = isChecked;
 
@@ -239,6 +239,7 @@ Please will you give me a javascript function populateFilters() which uses curre
     }
 
     function clearFilters() {
+      // TODO: NEEDS REVIEW: code mostly written by ChatGPT-3.5
       currentFilterSelection = { location: {}, brand: {}, channel: {} };
 
       data.forEach((row) => {
@@ -263,6 +264,64 @@ Please will you give me a javascript function populateFilters() which uses curre
       populateFilterForms();
     }
 
+    function getCurrentFilterStates() {
+      const filters = ["brand-filter", "location-filter", "channel-filter"];
+
+      filters.forEach((filterType) => {
+        const form = document.getElementById(filterType);
+        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+        const filterName = filterType.split("-")[0]; // brand, location, channel
+
+        currentFilterSelection[filterName] = {};
+
+        checkboxes.forEach((checkbox) => {
+          const itemName = checkbox.name;
+          currentFilterSelection[filterName][itemName] = checkbox.checked;
+        });
+      });
+    }
+
+    function filterData() {
+      /*
+    let currentFilterSelection = {
+        // record of which filter checkboxes are ticked
+        "brand": {
+            "brand A": true,
+            "brand B": false
+        },
+        "channel": {
+            "online": true,
+            "wholesale": true
+        },
+        "location": {
+            "area 1": false,
+            "area 2": true
+        }
+    }
+
+    let data = [
+      {"brand": "brand A", "channel": "online", "location": "area 1"},
+      {"brand": "brand B", "channel": "online", "location": "area 2"}
+    ]
+
+    lef filteredData = []
+
+    Please write me a javascript function filterData() which uses object currentFilterSelection to
+    return a subset of data (populate filteredData)
+        */
+
+      // TODO: REVIEW THIS CODE: 100% written by chatGPT-3.5
+      getCurrentFilterStates();
+
+      filteredData = data.filter((item) => {
+        return (
+          currentFilterSelection.brand[item.brand] &&
+          currentFilterSelection.channel[item.channel] &&
+          currentFilterSelection.location[item.location]
+        );
+      });
+    }
+
     function newData() {
       // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
       const nBrands = parseInt(document.getElementById("n-brands").value);
@@ -274,6 +333,7 @@ Please will you give me a javascript function populateFilters() which uses curre
       data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
 
       clearFilters();
+      filterData();
     }
   </script>
 </html>
