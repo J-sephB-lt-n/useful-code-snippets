@@ -196,7 +196,7 @@ Please will you give me a javascript function populateFilters() which uses curre
       return data;
     }
 
-    function populateFilters() {
+    function populateFilterForms() {
       // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
       for (const [filterCategory, filterOptions] of Object.entries(
         currentFilterSelection,
@@ -206,23 +206,18 @@ Please will you give me a javascript function populateFilters() which uses curre
         const form = document.getElementById(formId);
 
         if (form) {
-          // Clear any existing content in the form
           form.innerHTML = "";
 
-          // Create fieldset and unordered list elements
           const fieldset = document.createElement("fieldset");
           const ul = document.createElement("ul");
 
           for (const [option, isChecked] of Object.entries(filterOptions)) {
-            // Create list item, label, and input elements
             const li = document.createElement("li");
             const label = document.createElement("label");
             const input = document.createElement("input");
 
-            // Format the label and input ids/names to be lowercase and hyphenated
-            const idValue = option.toLowerCase().replace(/\s+/g, "-");
+            const idValue = option.toLowerCase().replace(/\s+/g, "-"); // e.g. "area A"->"area-a"
 
-            // Set up the label
             label.setAttribute("for", idValue);
             label.textContent = option;
 
@@ -233,15 +228,10 @@ Please will you give me a javascript function populateFilters() which uses curre
             input.value = idValue;
             input.checked = isChecked;
 
-            // Append the input to the label, and the label to the list item
             label.appendChild(input);
             li.appendChild(label);
-
-            // Append the list item to the unordered list
             ul.appendChild(li);
           }
-
-          // Append the unordered list to the fieldset and the fieldset to the form
           fieldset.appendChild(ul);
           form.appendChild(fieldset);
         }
@@ -257,6 +247,7 @@ Please will you give me a javascript function populateFilters() which uses curre
       );
       const randomSeed = parseInt(document.getElementById("random-seed").value);
       data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
+      currentFilterSelection = { location: {}, brand: {}, channel: {} };
 
       // populate struct `currentFilterSelection`
       data.forEach((row) => {
@@ -279,7 +270,7 @@ Please will you give me a javascript function populateFilters() which uses curre
           }, {});
       });
 
-      populateFilters();
+      populateFilterForms();
     }
   </script>
 </html>
