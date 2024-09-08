@@ -295,6 +295,25 @@ Please will you give me a javascript function populateFilters() which uses curre
           currentFilterSelection.location[item.location]
         );
       });
+
+      filteredDataGroupByBrand = groupDataByDateAndBrand(filteredData);
+    }
+
+    function groupDataByDateAndBrand(filteredData) {
+      const groupedData = {};
+      filteredData.forEach((item) => {
+        const { date, brand, amount } = item;
+        const groupKey = `${date}-${brand}`;
+        if (!groupedData[groupKey]) {
+          groupedData[groupKey] = {
+            date: date,
+            brand: brand,
+            sumAmount: 0,
+          };
+        }
+        groupedData[groupKey].sumAmount += amount;
+      });
+      return Object.values(groupedData);
     }
 
     function newData() {
@@ -311,101 +330,124 @@ Please will you give me a javascript function populateFilters() which uses curre
       filterData();
     }
 
-    data = [
-      { date: "2023-01-01", value: 10, brand: "A" },
-      { date: "2023-01-02", value: 15, brand: "A" },
-      { date: "2023-01-03", value: 20, brand: "A" },
-      { date: "2023-01-01", value: 5, brand: "B" },
-      { date: "2023-01-02", value: 8, brand: "B" },
-      { date: "2023-01-03", value: 12, brand: "B" },
-      // Add more data points as needed
-    ];
+    function drawLineChart(data) {
+      // Set up the SVG dimensions
+      const margin = { top: 20, right: 150, bottom: 50, left: 50 }, // Increased right margin for legend
+        width = 800 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
 
-    // Set up dimensions
-    const margin = { top: 20, right: 20, bottom: 30, left: 50 };
-    const width = 600 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
+      // Parse the date format
+      const parseDate = d3.timeParse("%Y-%m-%d");
 
-    // Create SVG
-    const svg = d3
-      .select("#chart")
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+      // Format data
+      data.forEach((d) => {
+        d.date = parseDate(d.date);
+      });
 
-    // Parse dates
-    const parseDate = d3.timeParse("%Y-%m-%d");
-    data.forEach((d) => {
-      d.date = parseDate(d.date);
-    });
+      // Nest data by brand
+      const nestedData = d3.groups(data, (d) => d.brand);
 
-    // Get unique brands
-    const brands = [...new Set(data.map((d) => d.brand))];
+      // Remove any existing SVG if it exists for updates
+      d3.select("#chart").selectAll("*").remove();
 
-    // Set up scales
-    const x = d3
-      .scaleTime()
-      .domain(d3.extent(data, (d) => d.date))
-      .range([0, width]);
+      // Create the SVG canvas
+      const svg = d3
+        .select("#chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const y = d3
-      .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.value)])
-      .range([height, 0]);
+      // Set up the scales
+      const xScale = d3
+        .scaleTime()
+        .domain(d3.extent(data, (d) => d.date))
+        .range([0, width]);
 
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
+      const yScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(data, (d) => d.sumAmount)])
+        .nice()
+        .range([height, 0]);
 
-    // Create line generator
-    const line = d3
-      .line()
-      .x((d) => x(d.date))
-      .y((d) => y(d.value));
+      // Set up the line generator
+      const line = d3
+        .line()
+        .x((d) => xScale(d.date))
+        .y((d) => yScale(d.sumAmount));
 
-    // Add X axis
-    svg
-      .append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(x));
-
-    // Add Y axis
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add lines
-    brands.forEach((brand) => {
-      const brandData = data.filter((d) => d.brand === brand);
+      // Create X axis
       svg
-        .append("path")
-        .datum(brandData)
-        .attr("fill", "none")
-        .attr("stroke", color(brand))
-        .attr("stroke-width", 1.5)
-        .attr("d", line);
-    });
+        .append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(
+          d3.axisBottom(xScale).ticks(5).tickFormat(d3.timeFormat("%Y-%m-%d")),
+        )
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", "rotate(-45)");
 
-    // Add legend
-    const legend = svg
-      .selectAll(".legend")
-      .data(brands)
-      .enter()
-      .append("g")
-      .attr("class", "legend")
-      .attr("transform", (d, i) => `translate(0,${i * 20})`);
+      // Create Y axis
+      svg.append("g").call(d3.axisLeft(yScale));
 
-    legend
-      .append("rect")
-      .attr("x", width - 18)
-      .attr("width", 18)
-      .attr("height", 18)
-      .style("fill", color);
+      // Define color scale for the lines (one color per brand)
+      const colorScale = d3
+        .scaleOrdinal(d3.schemeCategory10)
+        .domain(nestedData.map((d) => d[0])); // Each brand gets a unique color
 
-    legend
-      .append("text")
-      .attr("x", width - 24)
-      .attr("y", 9)
-      .attr("dy", ".35em")
-      .style("text-anchor", "end")
-      .text((d) => d);
+      // Create lines for each brand
+      nestedData.forEach(([brand, values]) => {
+        svg
+          .append("path")
+          .datum(values)
+          .attr("fill", "none")
+          .attr("stroke", colorScale(brand)) // Assign color by brand
+          .attr("stroke-width", 1.5)
+          .attr("d", line);
+      });
+
+      // Add labels to the chart
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height + margin.bottom)
+        .attr("text-anchor", "middle")
+        .text("Date");
+
+      svg
+        .append("text")
+        .attr("x", -(height / 2))
+        .attr("y", -margin.left + 10)
+        .attr("text-anchor", "middle")
+        .attr("transform", "rotate(-90)")
+        .text("Sum Amount");
+
+      // Create the legend
+      const legend = svg
+        .selectAll(".legend")
+        .data(nestedData)
+        .enter()
+        .append("g")
+        .attr("class", "legend")
+        .attr("transform", (d, i) => `translate(${width - 100},${i * 20})`); // Move legend inside the visible area
+
+      legend
+        .append("rect")
+        .attr("x", 0) // Adjust x to fit inside the chart area
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", (d) => colorScale(d[0]));
+
+      legend
+        .append("text")
+        .attr("x", 25) // Position text to the right of the colored box
+        .attr("y", 9)
+        .attr("dy", "0.35em")
+        .style("text-anchor", "start")
+        .text((d) => d[0]); // Brand name
+    }
   </script>
 </html>
