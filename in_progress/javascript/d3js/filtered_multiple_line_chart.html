@@ -115,10 +115,13 @@ Please will you give me a javascript function populateFilters() which uses curre
         Clear Filters
       </button>
     </div>
+
+    <div id="chart"></div>
   </body>
   <script>
     let data = [];
     let filteredData = [];
+    let filteredDataGroupByBrand = [];
     let currentFilterSelection = { location: {}, brand: {}, channel: {} };
 
     function seededRandom(seed) {
@@ -282,34 +285,6 @@ Please will you give me a javascript function populateFilters() which uses curre
     }
 
     function filterData() {
-      /*
-    let currentFilterSelection = {
-        // record of which filter checkboxes are ticked
-        "brand": {
-            "brand A": true,
-            "brand B": false
-        },
-        "channel": {
-            "online": true,
-            "wholesale": true
-        },
-        "location": {
-            "area 1": false,
-            "area 2": true
-        }
-    }
-
-    let data = [
-      {"brand": "brand A", "channel": "online", "location": "area 1"},
-      {"brand": "brand B", "channel": "online", "location": "area 2"}
-    ]
-
-    lef filteredData = []
-
-    Please write me a javascript function filterData() which uses object currentFilterSelection to
-    return a subset of data (populate filteredData)
-        */
-
       // TODO: REVIEW THIS CODE: 100% written by chatGPT-3.5
       getCurrentFilterStates();
 
@@ -335,5 +310,102 @@ Please will you give me a javascript function populateFilters() which uses curre
       clearFilters();
       filterData();
     }
+
+    data = [
+      { date: "2023-01-01", value: 10, brand: "A" },
+      { date: "2023-01-02", value: 15, brand: "A" },
+      { date: "2023-01-03", value: 20, brand: "A" },
+      { date: "2023-01-01", value: 5, brand: "B" },
+      { date: "2023-01-02", value: 8, brand: "B" },
+      { date: "2023-01-03", value: 12, brand: "B" },
+      // Add more data points as needed
+    ];
+
+    // Set up dimensions
+    const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+    const width = 600 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    // Create SVG
+    const svg = d3
+      .select("#chart")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Parse dates
+    const parseDate = d3.timeParse("%Y-%m-%d");
+    data.forEach((d) => {
+      d.date = parseDate(d.date);
+    });
+
+    // Get unique brands
+    const brands = [...new Set(data.map((d) => d.brand))];
+
+    // Set up scales
+    const x = d3
+      .scaleTime()
+      .domain(d3.extent(data, (d) => d.date))
+      .range([0, width]);
+
+    const y = d3
+      .scaleLinear()
+      .domain([0, d3.max(data, (d) => d.value)])
+      .range([height, 0]);
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Create line generator
+    const line = d3
+      .line()
+      .x((d) => x(d.date))
+      .y((d) => y(d.value));
+
+    // Add X axis
+    svg
+      .append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x));
+
+    // Add Y axis
+    svg.append("g").call(d3.axisLeft(y));
+
+    // Add lines
+    brands.forEach((brand) => {
+      const brandData = data.filter((d) => d.brand === brand);
+      svg
+        .append("path")
+        .datum(brandData)
+        .attr("fill", "none")
+        .attr("stroke", color(brand))
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+    });
+
+    // Add legend
+    const legend = svg
+      .selectAll(".legend")
+      .data(brands)
+      .enter()
+      .append("g")
+      .attr("class", "legend")
+      .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+    legend
+      .append("rect")
+      .attr("x", width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
+
+    legend
+      .append("text")
+      .attr("x", width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text((d) => d);
   </script>
 </html>
