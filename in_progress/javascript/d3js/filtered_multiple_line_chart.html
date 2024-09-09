@@ -39,18 +39,35 @@ Please write me a javascript function which simulates random data of this form:
   <body>
     <div class="content-box">
       <h2>Simulation Controls</h2>
-      <input type="number" id="random-seed" placeholder="Enter random seed" />
-      <input type="number" id="n-brands" placeholder="Number of brands" />
-      <input type="number" id="n-locations" placeholder="Number of locations" />
-      <input
-        type="number"
-        id="n-data-points"
-        placeholder="Number of data points"
-      />
+      <div style="display: inline-block; margin-right: 10px">
+        <label for="random-seed">Random Seed</label><br />
+        <input type="number" id="random-seed" placeholder="Any number" />
+      </div>
+
+      <div style="display: inline-block; margin-right: 10px">
+        <label for="n-brands">Number of Brands</label><br />
+        <input type="number" id="n-brands" placeholder="A positive integer" />
+      </div>
+
+      <div style="display: inline-block">
+        <label for="n-locations">Number of Locations</label><br />
+        <input
+          type="number"
+          id="n-locations"
+          placeholder="A positive integer"
+        />
+      </div>
+
+      <div style="display: inline-block">
+        <label for="sim-n-days">Number of days to simulate</label><br />
+        <input type="number" id="sim-n-days" placeholder="A positive integer" />
+      </div>
+
       <button id="simulate-data-button" onclick="newData()">
         Simulate Data
       </button>
     </div>
+
     <div class="content-box">
       <h2>Data Filters</h2>
 
@@ -320,9 +337,7 @@ Please will you give me a javascript function populateFilters() which uses curre
       // TODO: NEEDS REVIEW: this entire function written by ChatGPT-3.5
       const nBrands = parseInt(document.getElementById("n-brands").value);
       const nLocations = parseInt(document.getElementById("n-locations").value);
-      const nDataPoints = parseInt(
-        document.getElementById("n-data-points").value,
-      );
+      const nDataPoints = parseInt(document.getElementById("sim-n-days").value);
       const randomSeed = parseInt(document.getElementById("random-seed").value);
       data = generateRandomData(nBrands, nLocations, nDataPoints, randomSeed);
 
