@@ -282,6 +282,8 @@ Please will you give me a javascript function populateFilters() which uses curre
       });
 
       populateFilterForms();
+      filterData();
+      drawLineChart(filteredDataGroupByBrand);
     }
 
     function getCurrentFilterStates() {
@@ -350,7 +352,7 @@ Please will you give me a javascript function populateFilters() which uses curre
       document
         .getElementById("all-filters")
         .addEventListener("change", function (event) {
-          console.log(event);
+          // console.log(event);
           filterData();
           drawLineChart(filteredDataGroupByBrand);
         });
@@ -393,7 +395,11 @@ Please will you give me a javascript function populateFilters() which uses curre
 
       const yScale = d3
         .scaleLinear()
-        .domain([0, d3.max(data, (d) => d.sumAmount)])
+        .domain([
+          d3.min(data, (d) => d.sumAmount),
+          d3.max(data, (d) => d.sumAmount),
+        ])
+        // .domain([0, d3.max(data, (d) => d.sumAmount)])
         .nice()
         .range([height, 0]);
 
