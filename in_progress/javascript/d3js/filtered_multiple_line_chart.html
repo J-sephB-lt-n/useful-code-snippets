@@ -68,7 +68,7 @@ Please write me a javascript function which simulates random data of this form:
       </button>
     </div>
 
-    <div class="content-box">
+    <div id="all-filters" class="content-box">
       <h2>Data Filters</h2>
 
       <!-- 
@@ -343,7 +343,18 @@ Please will you give me a javascript function populateFilters() which uses curre
 
       clearFilters();
       filterData();
+      drawLineChart(filteredDataGroupByBrand);
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document
+        .getElementById("all-filters")
+        .addEventListener("change", function (event) {
+          console.log(event);
+          filterData();
+          drawLineChart(filteredDataGroupByBrand);
+        });
+    });
 
     function drawLineChart(data) {
       // Set up the SVG dimensions
