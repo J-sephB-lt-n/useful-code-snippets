@@ -7,6 +7,7 @@ NOTES: The pipeline currently does the following:
 """
 
 import time
+import types
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -232,3 +233,22 @@ plt.title(
 )
 plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
 plt.show()
+
+
+# investigate feature effects on prediction #
+def predict_for_kernel_shap(x_in: np.ndarray) -> np.ndarray:
+    """A prediction function which Kernel SHAP can use
+    (since it gets stuck on column names using the standard predict function)
+    Notes:
+        See https://datascience.stackexchange.com/questions/52476/how-to-use-shap-kernal-explainer-with-pipeline-models
+    """
+    x_df = pd.DataFrame(x_in, columns=X_train.columns)
+    return final_model.predict(x_df)
+
+
+X_train_sample = X_train.sample(1_000)
+shap_explainer = shap.KernelExplainer(
+    lambda x: final_model.predict(pd.DataFrame(x, columns=X_train.columns)),
+    X_train_sample,
+)
+shap_values = shap_explainer(X_train_sample)
