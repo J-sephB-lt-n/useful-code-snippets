@@ -1,23 +1,19 @@
 """
 TAGS: fit|learning|machine|machine learning|ml|model|models|predict|predictive|regression|scikit-learn|sklearn|train
 DESCRIPTION: An example of a regression pipeline in scikit-learn
-REQUIREMENTS: pip install 'pandas==2.2.2' 'polars==1.6.0' 'pyarrow==17.0.0' 'scikit-learn==1.5.1' ipython altair
-NOTES: The pipeline does the following:
-NOTES:      - Reads in data from CSV
-NOTES:      - Data preprocessing (https://scikit-learn.org/stable/modules/preprocessing.html):
-NOTES:          - Standardises numeric variables
-NOTES:          - One-hot encodes categorical variables 
-NOTES:          - (optional) splines on 
-NOTES:          - FUTURE: feature extraction from raw text features
-NOTES:      - Feature selection (https://scikit-learn.org/stable/modules/feature_selection.html#feature-selection-as-part-of-a-pipeline)
-NOTES:      - Code to quantify/visualise error distribution by feature
+REQUIREMENTS: pip install 'pandas==2.2.2' 'polars==1.6.0' 'pyarrow==17.0.0' 'scikit-learn==1.5.1' 'seaborn==0.13.2' 'shap==0.46.0'
+NOTES: In a future iteration, I want to include a hyperparameter tuning step in this script
+NOTES: The pipeline currently does the following:
 """
+
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd  # I will drop pandas when sklearn integrates polars more fully
 import polars as pl
 import seaborn as sns
+import shap
 from sklearn import linear_model
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
@@ -60,7 +56,7 @@ df.describe()
 X = df.drop("price")
 y = df.select("price")
 X = X.collect().to_pandas()  # I'm not happy about this
-y = y.collect().to_pandas()["price"]  # I'm not happy about this
+y = y.collect().to_pandas()["price"].to_numpy()  # I'm not happy about this
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.1, random_state=69420
 )
@@ -173,6 +169,8 @@ for pipeline_name, pipeline in pipelines.items():
         f'{(cross_valid_results[pipeline_name]["fit_time"].sum() + cross_valid_results[pipeline_name]["score_time"].sum()):,.0f}'
         " seconds"
     )
+
+# visualise cross validation results #
 cross_valid_results_long = []
 for model, metrics in cross_valid_results.items():
     for metric, values in metrics.items():
@@ -197,4 +195,40 @@ g.map(sns.stripplot, "model", "value", jitter=True, dodge=True)
 g.set_titles("{col_name}")
 g.set_axis_labels("Model", "Metric Value")
 g.tight_layout()
+plt.show()
+
+
+# select final model and train/predict #
+final_model: Pipeline = pipelines["extremely_randomized_trees"]
+fit_start_time: float = time.perf_counter()
+final_model.fit(X_train, y_train)
+fit_end_time: float = time.perf_counter()
+print(f"Model finished training in {(fit_end_time-fit_start_time):,.2f} seconds")
+preds_traindata: np.ndarray = final_model.predict(X_train)
+preds_testdata: np.ndarray = final_model.predict(X_test)
+
+# visualise distributions of prediction errors #
+errors_traindata: np.ndarray = preds_traindata - y_train
+errors_testdata: np.ndarray = preds_testdata - y_test
+percentage_errors_traindata: np.ndarray = (preds_traindata - y_train) / y_train
+percentage_errors_testdata: np.ndarray = (preds_testdata - y_test) / y_test
+sns.histplot(errors_traindata, bins=100, kde=True, color="red")
+plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Training data")
+plt.xlabel("Error ($\hat{y}-y$)")
+plt.show()
+sns.histplot(errors_testdata, bins=100, kde=True, color="red")
+plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Test (unseen) data")
+plt.xlabel("Error ($\hat{y}-y$)")
+plt.show()
+sns.histplot(percentage_errors_traindata, bins=100, kde=True, color="red")
+plt.title(
+    r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on Training data"
+)
+plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
+plt.show()
+sns.histplot(percentage_errors_testdata, bins=100, kde=True, color="red")
+plt.title(
+    r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on Test (unseen) data"
+)
+plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
 plt.show()
