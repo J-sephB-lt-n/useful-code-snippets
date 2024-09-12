@@ -320,30 +320,41 @@ for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
             f"Scatterplot of feature '{x1_name}' vs feature '{x2_name}' (unseen test data)"
         )
     elif n_numeric_features == 1:
-        pass
         # 1 feature is numeric and the other is categorical #
-        # if X_test[x1_name].dtype.kind in "iufc":
-        #     numeric_feature_name: str = x1_name
-        #     categ_feature_name: str = x2_name
-        # else:
-        #     numeric_feature_name: str = x2_name
-        #     categ_feature_name: str = x1_name
-        # sns.scatterplot(
-        #     x=numeric_feature_name,
-        #     y="error",
-        #     hue=categ_feature_name,
-        #     style=categ_feature_name,
-        #     data=pd.concat(
-        #         [
-        #             X_test.reset_index(),
-        #             pd.DataFrame({"error": errors_testdata}),
-        #         ],
-        #         axis=1,
-        #     ),
-        #     palette="Set1",
-        #     alpha=0.6,
-        #     s=50,
-        # )
+        if X_test[x1_name].dtype.kind in "iufc":
+            numeric_feature_name: str = x1_name
+            categ_feature_name: str = x2_name
+        else:
+            numeric_feature_name: str = x2_name
+            categ_feature_name: str = x1_name
+        g = sns.FacetGrid(
+            pd.concat(
+                [
+                    X_test.reset_index(),
+                    pd.DataFrame({"error": errors_testdata}),
+                ],
+                axis=1,
+            ),
+            col=categ_feature_name,
+            col_wrap=5,
+            height=4,
+            aspect=1,
+        )
+        g.map(
+            sns.scatterplot,
+            numeric_feature_name,
+            "error",
+            s=10,
+            alpha=0.3,
+        )
+        g.figure.suptitle(
+            (
+                f"Distribution of prediction errors within feature '{numeric_feature_name}',"
+                f" separately within each level of feature '{categ_feature_name}'"
+            ),
+        )
+        g.figure.subplots_adjust(top=0.9)  # Adjust top to make space for the title
+        g.set_axis_labels(numeric_feature_name, "Prediction error")
     else:  # both features are categorical
         heatmap_data = pd.concat(
             [
