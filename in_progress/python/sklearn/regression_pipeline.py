@@ -289,6 +289,30 @@ for colname in X_test.columns:
 
 # look for bivariate areas of the feature space with large errors #
 abs_errors_testdata = np.abs(errors_testdata)
+
+for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
+    plt.figure(figsize=(12, 6))
+    if X_test[x1_name].dtype.kind in "iufc" and X_test[x2_name].dtype.kind in "iufc":
+        # both features are numeric #
+        scatter = plt.scatter(
+            X_test[x1_name],
+            X_test[x2_name],
+            c=y_test,
+            cmap="viridis",
+            vmin=abs_errors_testdata.min(),
+            vmax=abs_errors_testdata.max(),
+            alpha=0.2,
+            s=5,
+        )
+        plt.colorbar(scatter, label="absolute_error")
+        plt.xlabel(x1_name)
+        plt.ylabel(x2_name)
+        plt.title(
+            f"Scatterplot of feature '{x1_name}' vs feature '{x2_name}' (unseen test data)"
+        )
+        break
+    plt.show()
+
 numeric_cols = X_test.select_dtypes(include="number").columns
 X_test_categoricalised = X_test.copy()
 X_test_categoricalised[numeric_cols] = X_test_categoricalised[numeric_cols].apply(
