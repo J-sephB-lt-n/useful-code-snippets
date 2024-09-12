@@ -11,7 +11,7 @@ from typing import Final
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd  # I will drop pandas when sklearn integrates polars more fully
+import pandas as pd  # I will use only polars when there is more support for polars in sklearn
 import polars as pl
 import seaborn as sns
 import shap
@@ -55,7 +55,9 @@ df = (
 )
 
 # quick peek at the data #
+print("--first 10 rows--")
 df.head(10).collect()
+print("--data summary--")
 df.describe()
 
 # data splitting #
@@ -168,9 +170,9 @@ k_folds: int = 10
 for pipeline_name, pipeline in pipelines.items():
     print(f"Started: [{pipeline_name}]")
     cross_valid_results[pipeline_name] = cross_validate(
-        pipeline,
-        X_train,
-        y_train,
+        estimator=pipeline,
+        X=X_train,
+        y=y_train,
         cv=k_folds,
         scoring=[
             "r2",  # R^2 = 'coefficient of determination' = 1 - sum(y_i-y^_i)^2 / sum(y_i-mean(y))^2
@@ -215,7 +217,6 @@ g.tight_layout()
 g.figure.subplots_adjust(top=0.9)  # Adjust top to make space for the title
 plt.show()
 
-
 # select final model and train/predict #
 final_model: Pipeline = pipelines["extremely_randomized_trees"]
 fit_start_time: float = time.perf_counter()
@@ -230,20 +231,24 @@ errors_traindata: np.ndarray = preds_traindata - y_train
 errors_testdata: np.ndarray = preds_testdata - y_test
 percentage_errors_traindata: np.ndarray = (preds_traindata - y_train) / y_train
 percentage_errors_testdata: np.ndarray = (preds_testdata - y_test) / y_test
+
 sns.histplot(errors_traindata, bins=100, kde=True, color="red")
 plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Training data")
-plt.xlabel("Error ($\hat{y}-y$)")
+plt.xlabel(r"Error ($\hat{y}-y$)")
 plt.show()
+
 sns.histplot(errors_testdata, bins=100, kde=True, color="red")
 plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Test (unseen) data")
-plt.xlabel("Error ($\hat{y}-y$)")
+plt.xlabel(r"Error ($\hat{y}-y$)")
 plt.show()
+
 sns.histplot(percentage_errors_traindata, bins=100, kde=True, color="red")
 plt.title(
     r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on Training data"
 )
 plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
 plt.show()
+
 sns.histplot(percentage_errors_testdata, bins=100, kde=True, color="red")
 plt.title(
     r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on Test (unseen) data"
@@ -255,16 +260,16 @@ plt.show()
 SHOW_OUTLIERS_ON_BOXPLOT: Final[bool] = False
 for colname in X_test.columns:
     plt.figure(figsize=(12, 6))
-    if pd.api.types.is_numeric_dtype(X_test[colname]):
-        # Scatterplot for numeric columns
+    if X_test[colname].dtype.kind in "iufc":
+        # Scatterplot for numeric features #
         plt.scatter(X_test[colname], errors_testdata, alpha=0.2, s=5)
         plt.xlabel(colname)
-        plt.ylabel("prediction_error")
+        plt.ylabel("Prediction error")
         plt.title(
             f"Scatterplot of feature '{colname}' vs prediction_error (unseen test data)"
         )
     else:
-        # Boxplot for categorical columns
+        # Boxplot for categorical features #
         sns.boxplot(
             x=colname,
             y="error",
@@ -278,7 +283,7 @@ for colname in X_test.columns:
             showfliers=SHOW_OUTLIERS_ON_BOXPLOT,
         )
         plt.xlabel(colname)
-        plt.ylabel("prediction_error")
+        plt.ylabel("Prediction error")
         plt.title(
             f"Distribution of prediction errors within each level of feature '{colname}' (unseen test data) displayOutliers={SHOW_OUTLIERS_ON_BOXPLOT}"
         )
@@ -287,7 +292,8 @@ for colname in X_test.columns:
 
 # look for bivariate areas of the feature space with large errors #
 HEATMAP_MIN_OBSERVATIONS_THRESHOLD: Final[int] = (
-    50  # subsets of the data with fewer than this number of samples are omitted from the heatmap
+    # subsets of the data with fewer than this number of samples are omitted from the heatmap
+    50
 )
 abs_errors_testdata = np.abs(errors_testdata)
 for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
@@ -315,6 +321,29 @@ for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
         )
     elif n_numeric_features == 1:
         pass
+        # 1 feature is numeric and the other is categorical #
+        # if X_test[x1_name].dtype.kind in "iufc":
+        #     numeric_feature_name: str = x1_name
+        #     categ_feature_name: str = x2_name
+        # else:
+        #     numeric_feature_name: str = x2_name
+        #     categ_feature_name: str = x1_name
+        # sns.scatterplot(
+        #     x=numeric_feature_name,
+        #     y="error",
+        #     hue=categ_feature_name,
+        #     style=categ_feature_name,
+        #     data=pd.concat(
+        #         [
+        #             X_test.reset_index(),
+        #             pd.DataFrame({"error": errors_testdata}),
+        #         ],
+        #         axis=1,
+        #     ),
+        #     palette="Set1",
+        #     alpha=0.6,
+        #     s=50,
+        # )
     else:  # both features are categorical
         heatmap_data = pd.concat(
             [
@@ -325,7 +354,7 @@ for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
         ).pivot_table(
             index=x1_name, columns=x2_name, values="absolute_error", aggfunc="mean"
         )
-        # Remove heatmap cells with fewer than 50 observations #
+        # Remove heatmap cells with too few observations #
         observation_counts = pd.concat(
             [
                 X_test.reset_index(drop=True),
