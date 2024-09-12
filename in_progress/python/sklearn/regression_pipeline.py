@@ -6,8 +6,9 @@ NOTES: In a future iteration, I want to include a hyperparameter tuning step in 
 NOTES: The pipeline currently does the following:
 """
 
+import itertools
 import time
-import types
+from typing import Final
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +22,13 @@ from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, SplineTransformer, StandardScaler
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    PolynomialFeatures,
+    SplineTransformer,
+    StandardScaler,
+)
+from tqdm import tqdm
 
 pl.Config.set_tbl_cols(15)  # show up to 15 columns in table display
 
@@ -88,9 +95,17 @@ numeric_splines_transformer = Pipeline(
                 n_knots=5,
                 degree=3,
                 knots="quantile",
-                extrapolation="constant",
+                extrapolation="linear",
                 include_bias=True,
             ),
+        ),
+    ]
+)
+interaction_terms_transformer = Pipeline(
+    steps=[
+        (
+            "interaction_terms",
+            PolynomialFeatures(degree=2, interaction_only=True, include_bias=False),
         ),
     ]
 )
@@ -128,6 +143,7 @@ pipelines = {
     "ridge_splines": Pipeline(
         steps=[
             ("preprocess_data", splines_data_preprocessor),
+            ("add_interaction_terms", interaction_terms_transformer),
             ("feature_selection", VarianceThreshold(threshold=0.0)),
             ("regressor", linear_model.Ridge()),
         ]
@@ -150,23 +166,24 @@ pipelines = {
 
 # cross validation #
 cross_valid_results = {}
+k_folds: int = 10
 for pipeline_name, pipeline in pipelines.items():
     print(f"Started: [{pipeline_name}]")
     cross_valid_results[pipeline_name] = cross_validate(
         pipeline,
         X_train,
         y_train,
-        cv=5,
+        cv=k_folds,
         scoring=[
-            "r2",  # explain
+            "r2",  # R^2 = 'coefficient of determination' = 1 - sum(y_i-y^_i)^2 / sum(y_i-mean(y))^2
             "max_error",  # max( |y_true-y_pred| )
-            "neg_mean_absolute_error",  # mean( |y_true-y_pred| )
-            "neg_root_mean_squared_error",  # explain
-            "neg_mean_absolute_percentage_error",  # mean( |y_true-y_pred| / |y_true| )
+            "neg_mean_absolute_error",  # - mean( |y_true-y_pred| )
+            "neg_root_mean_squared_error",  # - sqrt( mean( (y_true-y_pred)^2 ) )
+            "neg_mean_absolute_percentage_error",  # - mean( |y_true-y_pred| / |y_true| )
         ],
     )
     print(
-        f"Finished [{pipeline_name}] in "
+        f"\tFinished [{pipeline_name}] in "
         f'{(cross_valid_results[pipeline_name]["fit_time"].sum() + cross_valid_results[pipeline_name]["score_time"].sum()):,.0f}'
         " seconds"
     )
@@ -195,7 +212,9 @@ for ax in g.axes.flat:
 g.map(sns.stripplot, "model", "value", jitter=True, dodge=True)
 g.set_titles("{col_name}")
 g.set_axis_labels("Model", "Metric Value")
+g.fig.suptitle(f"Results of {k_folds}-Fold Cross Validation", fontsize=16)
 g.tight_layout()
+g.fig.subplots_adjust(top=0.9)  # Adjust top to make space for the title
 plt.show()
 
 
@@ -234,6 +253,108 @@ plt.title(
 plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
 plt.show()
 
+# look for univariate areas of the feature space with large errors #
+SHOW_OUTLIERS_ON_BOXPLOT: Final[bool] = False
+for colname in X_test.columns:
+    plt.figure(figsize=(12, 6))
+    if pd.api.types.is_numeric_dtype(X_test[colname]):
+        # Scatterplot for numeric columns
+        plt.scatter(X_test[colname], errors_testdata, alpha=0.2, s=5)
+        plt.xlabel(colname)
+        plt.ylabel("prediction_error")
+        plt.title(
+            f"Scatterplot of feature '{colname}' vs prediction_error (unseen test data)"
+        )
+    else:
+        # Boxplot for categorical columns
+        sns.boxplot(
+            x=colname,
+            y="error",
+            data=pd.concat(
+                [
+                    X_test.reset_index(),
+                    pd.DataFrame({"error": errors_testdata}),
+                ],
+                axis=1,
+            ),
+            showfliers=SHOW_OUTLIERS_ON_BOXPLOT,
+        )
+        plt.xlabel(colname)
+        plt.ylabel("prediction_error")
+        plt.title(
+            f"Distribution of prediction errors within each level of feature '{colname}' (unseen test data) displayOutliers={SHOW_OUTLIERS_ON_BOXPLOT}"
+        )
+    plt.show()
+
+
+# look for bivariate areas of the feature space with large errors #
+abs_errors_testdata = np.abs(errors_testdata)
+numeric_cols = X_test.select_dtypes(include="number").columns
+X_test_categoricalised = X_test.copy()
+X_test_categoricalised[numeric_cols] = X_test_categoricalised[numeric_cols].apply(
+    lambda col: pd.qcut(col, q=5, labels=None, duplicates="drop")
+)
+pairwise_combos_errors_df_list: list[pd.DataFrame] = []
+for x1_name, x2_name in tqdm(
+    list(itertools.combinations(X_test_categoricalised.columns, 2))
+):
+    pairwise_combos_errors_df_list.append(
+        pd.concat(
+            [
+                pd.DataFrame(
+                    {
+                        "x_1": X_test_categoricalised[x1_name].apply(
+                            lambda col: f"{x1_name}={col}"
+                        )
+                    }
+                ).reset_index(),
+                pd.DataFrame(
+                    {
+                        "x_2": X_test_categoricalised[x2_name].apply(
+                            lambda col: f"{x2_name}={col}"
+                        )
+                    }
+                ).reset_index(),
+                pd.DataFrame({"error": errors_testdata}),
+                pd.DataFrame(
+                    {"absolute_error": abs_errors_testdata},
+                ),
+            ],
+            axis=1,
+        )
+        .groupby(["x_1", "x_2"], observed=True)
+        .agg(
+            n_samples=("error", "count"),
+            mean_absolute_error=("absolute_error", "mean"),
+            mean_error=("error", "mean"),
+        )
+        .reset_index()
+    )
+pairwise_combos_errors_df: pd.DataFrame = pd.concat(
+    pairwise_combos_errors_df_list, axis=0
+).reset_index(drop=True)
+pairwise_combos_errors_df["global_mean_absolute_error"] = abs_errors_testdata.mean()
+pairwise_combos_errors_df["ratio_to_global_mean_absolute_error"] = (
+    pairwise_combos_errors_df["mean_absolute_error"] / abs_errors_testdata.mean()
+)
+min_percent_of_data: float = (
+    0.05  # discard areas of the feature space smaller than this % of the total test data
+)
+n_samples_cutoff: int = int(X_test.shape[0] * min_percent_of_data)
+print(f"Discarding subsets of the data with fewer than {n_samples_cutoff:,} samples")
+pairwise_combos_errors_df_no_small_samples = pairwise_combos_errors_df[
+    pairwise_combos_errors_df["n_samples"] >= n_samples_cutoff
+]
+print(
+    f"Discarded {(pairwise_combos_errors_df.shape[0]-pairwise_combos_errors_df_no_small_samples.shape[0]):,} subsets out of {pairwise_combos_errors_df.shape[0]:,}"
+)
+pairwise_combos_errors_df_no_small_samples = (
+    pairwise_combos_errors_df_no_small_samples.sort_values(
+        "mean_absolute_error", ascending=False
+    )
+)
+pairwise_combos_errors_df_no_small_samples.head(20)
+
 
 # investigate feature effects on prediction #
 def predict_for_kernel_shap(x_in: np.ndarray) -> np.ndarray:
@@ -246,9 +367,14 @@ def predict_for_kernel_shap(x_in: np.ndarray) -> np.ndarray:
     return final_model.predict(x_df)
 
 
-X_train_sample = X_train.sample(1_000)
+X_train_sample = X_train.sample(100)
 shap_explainer = shap.KernelExplainer(
     lambda x: final_model.predict(pd.DataFrame(x, columns=X_train.columns)),
     X_train_sample,
 )
+shap_values_start_time: float = time.perf_counter()
 shap_values = shap_explainer(X_train_sample)
+shap_values_end_time: float = time.perf_counter()
+# print(f"Finished calculating {len(X_train_sample)} SHAP values in {} minutes")
+for feature_name in X_train:
+    shap.dependence_plot(feature_name, shap_values.values, X_train_sample)
