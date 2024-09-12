@@ -212,9 +212,9 @@ for ax in g.axes.flat:
 g.map(sns.stripplot, "model", "value", jitter=True, dodge=True)
 g.set_titles("{col_name}")
 g.set_axis_labels("Model", "Metric Value")
-g.fig.suptitle(f"Results of {k_folds}-Fold Cross Validation", fontsize=16)
+g.figure.suptitle(f"Results of {k_folds}-Fold Cross Validation", fontsize=16)
 g.tight_layout()
-g.fig.subplots_adjust(top=0.9)  # Adjust top to make space for the title
+g.figure.subplots_adjust(top=0.9)  # Adjust top to make space for the title
 plt.show()
 
 
@@ -288,11 +288,16 @@ for colname in X_test.columns:
 
 
 # look for bivariate areas of the feature space with large errors #
+HEATMAP_MIN_OBSERVATIONS_THRESHOLD: Final[int] = (
+    50  # subsets of the data with fewer than this number of samples are omitted from the heatmap
+)
 abs_errors_testdata = np.abs(errors_testdata)
-
 for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
     plt.figure(figsize=(12, 6))
-    if X_test[x1_name].dtype.kind in "iufc" and X_test[x2_name].dtype.kind in "iufc":
+    n_numeric_features: int = sum(
+        X_test[feature_name].dtype.kind in "iufc" for feature_name in (x1_name, x2_name)
+    )
+    if n_numeric_features == 2:
         # both features are numeric #
         scatter = plt.scatter(
             X_test[x1_name],
@@ -310,7 +315,45 @@ for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
         plt.title(
             f"Scatterplot of feature '{x1_name}' vs feature '{x2_name}' (unseen test data)"
         )
-        break
+    elif n_numeric_features == 1:
+        pass
+    else:  # both features are categorical
+        heatmap_data = pd.concat(
+            [
+                X_test.reset_index(drop=True),
+                pd.DataFrame({"absolute_error": abs_errors_testdata}),
+            ],
+            axis=1,
+        ).pivot_table(
+            index=x1_name, columns=x2_name, values="absolute_error", aggfunc="mean"
+        )
+        # Remove heatmap cells with fewer than 50 observations #
+        observation_counts = pd.concat(
+            [
+                X_test.reset_index(drop=True),
+                pd.DataFrame({"absolute_error": abs_errors_testdata}),
+            ],
+            axis=1,
+        ).pivot_table(
+            index=x1_name, columns=x2_name, values="absolute_error", aggfunc="count"
+        )
+        mask = observation_counts >= HEATMAP_MIN_OBSERVATIONS_THRESHOLD
+        filtered_heatmap_data = heatmap_data.where(mask)
+        filtered_heatmap_data = filtered_heatmap_data.fillna(np.nan)
+        sns.heatmap(
+            filtered_heatmap_data,
+            annot=True,
+            fmt=".1f",
+            cmap="viridis",
+            cbar_kws={"label": "Mean Absolute Error"},
+        )
+        plt.title(
+            f"Heatmap of feature '{x1_name}' vs feature '{x2_name}' coloured by Mean Absolute Error"
+            f"\n(cells with fewer than {HEATMAP_MIN_OBSERVATIONS_THRESHOLD} not populated)"
+        )
+        plt.xlabel(x2_name)
+        plt.ylabel(x1_name)
+
     plt.show()
 
 numeric_cols = X_test.select_dtypes(include="number").columns
