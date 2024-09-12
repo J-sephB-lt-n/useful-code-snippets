@@ -3,7 +3,6 @@ TAGS: fit|learning|machine|machine learning|ml|model|models|predict|predictive|r
 DESCRIPTION: An example of a regression pipeline in scikit-learn
 REQUIREMENTS: pip install 'pandas==2.2.2' 'polars==1.6.0' 'pyarrow==17.0.0' 'scikit-learn==1.5.1' 'seaborn==0.13.2' 'shap==0.46.0'
 NOTES: In a future iteration, I want to include a hyperparameter tuning step in this script
-NOTES: The pipeline currently does the following:
 """
 
 import itertools
@@ -28,7 +27,6 @@ from sklearn.preprocessing import (
     SplineTransformer,
     StandardScaler,
 )
-from tqdm import tqdm
 
 pl.Config.set_tbl_cols(15)  # show up to 15 columns in table display
 
@@ -349,78 +347,11 @@ for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
         )
         plt.title(
             f"Heatmap of feature '{x1_name}' vs feature '{x2_name}' coloured by Mean Absolute Error"
-            f"\n(cells with fewer than {HEATMAP_MIN_OBSERVATIONS_THRESHOLD} not populated)"
+            f"\n(cells with fewer than {HEATMAP_MIN_OBSERVATIONS_THRESHOLD} observations not populated)"
         )
         plt.xlabel(x2_name)
         plt.ylabel(x1_name)
-
     plt.show()
-
-numeric_cols = X_test.select_dtypes(include="number").columns
-X_test_categoricalised = X_test.copy()
-X_test_categoricalised[numeric_cols] = X_test_categoricalised[numeric_cols].apply(
-    lambda col: pd.qcut(col, q=5, labels=None, duplicates="drop")
-)
-pairwise_combos_errors_df_list: list[pd.DataFrame] = []
-for x1_name, x2_name in tqdm(
-    list(itertools.combinations(X_test_categoricalised.columns, 2))
-):
-    pairwise_combos_errors_df_list.append(
-        pd.concat(
-            [
-                pd.DataFrame(
-                    {
-                        "x_1": X_test_categoricalised[x1_name].apply(
-                            lambda col: f"{x1_name}={col}"
-                        )
-                    }
-                ).reset_index(),
-                pd.DataFrame(
-                    {
-                        "x_2": X_test_categoricalised[x2_name].apply(
-                            lambda col: f"{x2_name}={col}"
-                        )
-                    }
-                ).reset_index(),
-                pd.DataFrame({"error": errors_testdata}),
-                pd.DataFrame(
-                    {"absolute_error": abs_errors_testdata},
-                ),
-            ],
-            axis=1,
-        )
-        .groupby(["x_1", "x_2"], observed=True)
-        .agg(
-            n_samples=("error", "count"),
-            mean_absolute_error=("absolute_error", "mean"),
-            mean_error=("error", "mean"),
-        )
-        .reset_index()
-    )
-pairwise_combos_errors_df: pd.DataFrame = pd.concat(
-    pairwise_combos_errors_df_list, axis=0
-).reset_index(drop=True)
-pairwise_combos_errors_df["global_mean_absolute_error"] = abs_errors_testdata.mean()
-pairwise_combos_errors_df["ratio_to_global_mean_absolute_error"] = (
-    pairwise_combos_errors_df["mean_absolute_error"] / abs_errors_testdata.mean()
-)
-min_percent_of_data: float = (
-    0.05  # discard areas of the feature space smaller than this % of the total test data
-)
-n_samples_cutoff: int = int(X_test.shape[0] * min_percent_of_data)
-print(f"Discarding subsets of the data with fewer than {n_samples_cutoff:,} samples")
-pairwise_combos_errors_df_no_small_samples = pairwise_combos_errors_df[
-    pairwise_combos_errors_df["n_samples"] >= n_samples_cutoff
-]
-print(
-    f"Discarded {(pairwise_combos_errors_df.shape[0]-pairwise_combos_errors_df_no_small_samples.shape[0]):,} subsets out of {pairwise_combos_errors_df.shape[0]:,}"
-)
-pairwise_combos_errors_df_no_small_samples = (
-    pairwise_combos_errors_df_no_small_samples.sort_values(
-        "mean_absolute_error", ascending=False
-    )
-)
-pairwise_combos_errors_df_no_small_samples.head(20)
 
 
 # investigate feature effects on prediction #
@@ -442,6 +373,8 @@ shap_explainer = shap.KernelExplainer(
 shap_values_start_time: float = time.perf_counter()
 shap_values = shap_explainer(X_train_sample)
 shap_values_end_time: float = time.perf_counter()
-# print(f"Finished calculating {len(X_train_sample)} SHAP values in {} minutes")
+print(
+    f"Finished calculating {len(X_train_sample)} SHAP values in {(shap_values_end_time-shap_values_start_time)/60:,.2f} minutes"
+)
 for feature_name in X_train:
     shap.dependence_plot(feature_name, shap_values.values, X_train_sample)
