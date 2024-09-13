@@ -55,10 +55,14 @@ df = (
 )
 
 # quick peek at the data #
-print("--first 10 rows--")
-df.head(10).collect()
-print("--data summary--")
-df.describe()
+print(
+    "--First 10 rows--\n",
+    df.head(10).collect(),
+)
+print(
+    "--data summary--\n",
+    df.describe(),
+)
 
 # data splitting #
 X = df.drop("price")
@@ -67,6 +71,21 @@ X = X.collect().to_pandas()  # I'm not happy about this
 y = y.collect().to_pandas()["price"].to_numpy()  # I'm not happy about this
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.1, random_state=69420
+)
+
+numeric_feature_colnames: set[str] = set()
+categorical_feature_colnames: set[str] = set()
+for colname in X_test.columns:
+    if X_test[colname].dtype.kind in "iufc":
+        numeric_feature_colnames.add(colname)
+    else:
+        categorical_feature_colnames.add(colname)
+print(
+    f"""
+Numeric features are: {", ".join(numeric_feature_colnames)}
+
+Categorical features are: {", ".join(categorical_feature_colnames)}
+"""
 )
 
 # data pre-processing #
@@ -231,6 +250,8 @@ errors_traindata: np.ndarray = preds_traindata - y_train
 errors_testdata: np.ndarray = preds_testdata - y_test
 percentage_errors_traindata: np.ndarray = (preds_traindata - y_train) / y_train
 percentage_errors_testdata: np.ndarray = (preds_testdata - y_test) / y_test
+absolute_errors_traindata = np.abs(errors_traindata)
+absolute_errors_testdata = np.abs(errors_testdata)
 
 sns.histplot(errors_traindata, bins=100, kde=True, color="red")
 plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Training data")
@@ -257,144 +278,149 @@ plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
 plt.show()
 
 # look for univariate areas of the feature space with large errors #
-SHOW_OUTLIERS_ON_BOXPLOT: Final[bool] = False
-for colname in X_test.columns:
+for colname in numeric_feature_colnames:
     plt.figure(figsize=(12, 6))
-    if X_test[colname].dtype.kind in "iufc":
-        # Scatterplot for numeric features #
-        plt.scatter(X_test[colname], errors_testdata, alpha=0.2, s=5)
-        plt.xlabel(colname)
-        plt.ylabel("Prediction error")
-        plt.title(
-            f"Scatterplot of feature '{colname}' vs prediction_error (unseen test data)"
-        )
-    else:
-        # Boxplot for categorical features #
-        sns.boxplot(
-            x=colname,
-            y="error",
-            data=pd.concat(
-                [
-                    X_test.reset_index(),
-                    pd.DataFrame({"error": errors_testdata}),
-                ],
-                axis=1,
-            ),
-            showfliers=SHOW_OUTLIERS_ON_BOXPLOT,
-        )
-        plt.xlabel(colname)
-        plt.ylabel("Prediction error")
-        plt.title(
-            f"Distribution of prediction errors within each level of feature '{colname}' (unseen test data) displayOutliers={SHOW_OUTLIERS_ON_BOXPLOT}"
-        )
+    plt.axhline(y=0, color="black", alpha=0.5)
+    plt.scatter(X_test[colname], errors_testdata, alpha=0.2, s=5)
+    plt.xlabel(colname)
+    plt.ylabel("Prediction error")
+    plt.title(
+        f"Scatterplot of feature '{colname}' vs prediction_error (unseen test data)"
+    )
     plt.show()
 
+SHOW_OUTLIERS_ON_BOXPLOT: Final[bool] = False
+for colname in categorical_feature_colnames:
+    sns.boxplot(
+        x=colname,
+        y="error",
+        data=pd.concat(
+            [
+                X_test.reset_index(),
+                pd.DataFrame({"error": errors_testdata}),
+            ],
+            axis=1,
+        ),
+        showfliers=SHOW_OUTLIERS_ON_BOXPLOT,
+    )
+    plt.xlabel(colname)
+    plt.ylabel("Prediction error")
+    plt.title(
+        f"Distribution of prediction errors within each level of feature '{colname}' (unseen test data) [displayOutliers={SHOW_OUTLIERS_ON_BOXPLOT}]"
+    )
+    plt.show()
 
 # look for bivariate areas of the feature space with large errors #
+case_both_numeric_features_colnames: list[tuple[str, str]] = []
+case_both_categorical_colnames: list[tuple[str, str]] = []
+case_one_numeric_one_categorical_colnames: list[tuple[str, str]] = []
+
+for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
+    n_numeric_features: int = sum(
+        [x in numeric_feature_colnames for x in (x1_name, x2_name)]
+    )
+    match n_numeric_features:
+        case 2:
+            case_both_numeric_features_colnames.append((x1_name, x2_name))
+        case 1:
+            case_one_numeric_one_categorical_colnames.append((x1_name, x2_name))
+        case _:
+            case_both_categorical_colnames.append((x1_name, x2_name))
+
+X_test_high_absolute_errors_last = pd.concat(
+    # I use this dataframe to plot higher errors on top of lower errors #
+    [
+        X_test.reset_index(drop=True),
+        pd.DataFrame(
+            {
+                "error": errors_testdata,
+                "absolute_error": np.abs(errors_testdata),
+            }
+        ),
+    ],
+    axis=1,
+).sort_values("absolute_error")
+
+for x1_name, x2_name in case_both_numeric_features_colnames:
+    plt.figure(figsize=(12, 6))
+    scatter = plt.scatter(
+        X_test_high_absolute_errors_last[x1_name],
+        X_test_high_absolute_errors_last[x2_name],
+        c=X_test_high_absolute_errors_last["absolute_error"],
+        cmap="viridis",
+        # alpha=0.5,
+        s=10,
+    )
+    plt.colorbar(scatter, label="absolute_error")
+    plt.xlabel(x1_name)
+    plt.ylabel(x2_name)
+    plt.title(
+        f"Scatterplot of feature '{x1_name}' vs feature '{x2_name}' (unseen test data)"
+    )
+    plt.show()
+
+for x1_name, x2_name in case_one_numeric_one_categorical_colnames:
+    if x1_name in numeric_feature_colnames:
+        numeric_feature_name: str = x1_name
+        categ_feature_name: str = x2_name
+    else:
+        numeric_feature_name: str = x2_name
+        categ_feature_name: str = x1_name
+    g = sns.FacetGrid(
+        X_test_high_absolute_errors_last,
+        col=categ_feature_name,
+        col_wrap=5,
+        height=4,
+        aspect=1,
+    )
+    g.map(
+        sns.scatterplot,
+        numeric_feature_name,
+        "error",
+        s=10,
+        alpha=0.3,
+    )
+    g.figure.suptitle(
+        (
+            f"Distribution of prediction errors within feature '{numeric_feature_name}',"
+            f" separately within each level of feature '{categ_feature_name}'"
+        ),
+    )
+    g.figure.subplots_adjust(top=0.9)  # Adjust top to make space for the title
+    g.set_axis_labels(numeric_feature_name, "Prediction error")
+    plt.show()
+
 HEATMAP_MIN_OBSERVATIONS_THRESHOLD: Final[int] = (
     # subsets of the data with fewer than this number of samples are omitted from the heatmap
     50
 )
-abs_errors_testdata = np.abs(errors_testdata)
-for x1_name, x2_name in itertools.combinations(X_test.columns, 2):
-    plt.figure(figsize=(12, 6))
-    n_numeric_features: int = sum(
-        X_test[feature_name].dtype.kind in "iufc" for feature_name in (x1_name, x2_name)
+for x1_name, x2_name in case_both_categorical_colnames:
+    heatmap_data = X_test_high_absolute_errors_last.pivot_table(
+        index=x1_name, columns=x2_name, values="absolute_error", aggfunc="mean"
     )
-    if n_numeric_features == 2:
-        # both features are numeric #
-        scatter = plt.scatter(
-            X_test[x1_name],
-            X_test[x2_name],
-            c=y_test,
-            cmap="viridis",
-            vmin=abs_errors_testdata.min(),
-            vmax=abs_errors_testdata.max(),
-            alpha=0.2,
-            s=5,
-        )
-        plt.colorbar(scatter, label="absolute_error")
-        plt.xlabel(x1_name)
-        plt.ylabel(x2_name)
-        plt.title(
-            f"Scatterplot of feature '{x1_name}' vs feature '{x2_name}' (unseen test data)"
-        )
-    elif n_numeric_features == 1:
-        # 1 feature is numeric and the other is categorical #
-        if X_test[x1_name].dtype.kind in "iufc":
-            numeric_feature_name: str = x1_name
-            categ_feature_name: str = x2_name
-        else:
-            numeric_feature_name: str = x2_name
-            categ_feature_name: str = x1_name
-        g = sns.FacetGrid(
-            pd.concat(
-                [
-                    X_test.reset_index(),
-                    pd.DataFrame({"error": errors_testdata}),
-                ],
-                axis=1,
-            ),
-            col=categ_feature_name,
-            col_wrap=5,
-            height=4,
-            aspect=1,
-        )
-        g.map(
-            sns.scatterplot,
-            numeric_feature_name,
-            "error",
-            s=10,
-            alpha=0.3,
-        )
-        g.figure.suptitle(
-            (
-                f"Distribution of prediction errors within feature '{numeric_feature_name}',"
-                f" separately within each level of feature '{categ_feature_name}'"
-            ),
-        )
-        g.figure.subplots_adjust(top=0.9)  # Adjust top to make space for the title
-        g.set_axis_labels(numeric_feature_name, "Prediction error")
-    else:  # both features are categorical
-        heatmap_data = pd.concat(
-            [
-                X_test.reset_index(drop=True),
-                pd.DataFrame({"absolute_error": abs_errors_testdata}),
-            ],
-            axis=1,
-        ).pivot_table(
-            index=x1_name, columns=x2_name, values="absolute_error", aggfunc="mean"
-        )
-        # Remove heatmap cells with too few observations #
-        observation_counts = pd.concat(
-            [
-                X_test.reset_index(drop=True),
-                pd.DataFrame({"absolute_error": abs_errors_testdata}),
-            ],
-            axis=1,
-        ).pivot_table(
-            index=x1_name, columns=x2_name, values="absolute_error", aggfunc="count"
-        )
-        mask = observation_counts >= HEATMAP_MIN_OBSERVATIONS_THRESHOLD
-        filtered_heatmap_data = heatmap_data.where(mask)
-        filtered_heatmap_data = filtered_heatmap_data.fillna(np.nan)
-        sns.heatmap(
-            filtered_heatmap_data,
-            annot=True,
-            fmt=".1f",
-            cmap="viridis",
-            cbar_kws={"label": "Mean Absolute Error"},
-        )
-        plt.title(
-            f"Heatmap of feature '{x1_name}' vs feature '{x2_name}' coloured by Mean Absolute Error"
-            f"\n(cells with fewer than {HEATMAP_MIN_OBSERVATIONS_THRESHOLD} observations not populated)"
-        )
-        plt.xlabel(x2_name)
-        plt.ylabel(x1_name)
+    observation_counts = X_test_high_absolute_errors_last.pivot_table(
+        index=x1_name, columns=x2_name, values="absolute_error", aggfunc="count"
+    )
+    mask = observation_counts >= HEATMAP_MIN_OBSERVATIONS_THRESHOLD
+    filtered_heatmap_data = heatmap_data.where(mask)
+    filtered_heatmap_data = filtered_heatmap_data.fillna(np.nan)
+    sns.heatmap(
+        filtered_heatmap_data,
+        annot=True,
+        fmt=".1f",
+        cmap="viridis",
+        cbar_kws={"label": "Mean Absolute Error"},
+    )
+    plt.title(
+        f"Heatmap of feature '{x1_name}' vs feature '{x2_name}' coloured by Mean Absolute Error"
+        f"\n(cells with fewer than {HEATMAP_MIN_OBSERVATIONS_THRESHOLD} observations not populated)"
+    )
+    plt.xlabel(x2_name)
+    plt.ylabel(x1_name)
     plt.show()
 
 
-# investigate feature effects on prediction #
+# investigate feature effects on prediction (SHAP values) #
 def predict_for_kernel_shap(x_in: np.ndarray) -> np.ndarray:
     """A prediction function which Kernel SHAP can use
     (since it gets stuck on column names using the standard predict function)
