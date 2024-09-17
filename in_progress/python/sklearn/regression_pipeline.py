@@ -65,18 +65,20 @@ print(
 )
 
 # data splitting #
+df = df.collect()
 X = df.drop("price")
 y = df.select("price")
-X = X.collect().to_pandas()  # I'm not happy about this
-y = y.collect().to_pandas()["price"].to_numpy()  # I'm not happy about this
+X = X.to_pandas()  # I'm not happy about this
+y = y.to_pandas()["price"].to_numpy()  # I'm not happy about this
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.1, random_state=69420
 )
 
 numeric_feature_colnames: set[str] = set()
 categorical_feature_colnames: set[str] = set()
-for colname in X_test.columns:
-    if X_test[colname].dtype.kind in "iufc":
+response_colname: str = "price"
+for colname in X.columns:
+    if X[colname].dtype.kind in "iufc":
         numeric_feature_colnames.add(colname)
     else:
         categorical_feature_colnames.add(colname)
@@ -85,8 +87,15 @@ print(
 Numeric features are: {", ".join(numeric_feature_colnames)}
 
 Categorical features are: {", ".join(categorical_feature_colnames)}
+
+Response is: {response_colname}
 """
 )
+
+# assess relationships between features (and response) using predictive power score #
+for colname_1, colname_2 in itertools.combinations(df.columns, 2):
+    if df[colname_1]
+    print(colname)
 
 # data pre-processing #
 numeric_transformer = Pipeline(
