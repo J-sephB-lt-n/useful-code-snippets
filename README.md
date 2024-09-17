@@ -33,7 +33,8 @@ snippets
 │   └── tooltips.html
 ├── docker
 │   ├── gcp
-│   │   └── flask_app_on_cloud_run.md
+│   │   ├── flask_app_on_cloud_run.md
+│   │   └── native_python_logging_in_compute_engine_vm_docker.py
 │   └── python
 │       └── install_chrome_browser_in_python_docker_container
 ├── javascript
@@ -59,11 +60,13 @@ snippets
 │   │   ├── authorizing_rest_api_calls_to_gcp_resources.py
 │   │   ├── bigquery_to_local_jsonl.py
 │   │   ├── bigquery_to_python.py
-│   │   ├── cloud_storage_to_python.py
-│   │   ├── list_filepaths_in_cloud_storage_bucket.py
-│   │   ├── self_deleting_vm.py
-│   │   ├── upload_file_to_cloud_storage_bucket.py
-│   │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
+│   │   ├── cloud_storage
+│   │   │   ├── cloud_storage_to_python.py
+│   │   │   ├── list_filepaths_in_cloud_storage_bucket.py
+│   │   │   ├── python_object_to_cloud_storage.py
+│   │   │   ├── upload_file_to_cloud_storage_bucket.py
+│   │   │   └── write_to_gcp_cloud_storage_from_outside_gcp.py
+│   │   └── self_deleting_vm.py
 │   ├── graph
 │   │   └── find_connected_node_paths.py
 │   ├── gui
@@ -95,6 +98,8 @@ snippets
 │   │   └── text_to_bag_of_words_nltk.py
 │   ├── regex
 │   │   └── extract_domain_from_website_url.py
+│   ├── selenium
+│   │   └── selenium_on_gcp_dev_util.py
 │   ├── spark
 │   │   └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
 │   └── stats
@@ -103,5 +108,5 @@ snippets
     └── gcp
         └── create_gcp_service_account.md
 
-35 directories, 50 files
+37 directories, 53 files
 ```
