@@ -17,8 +17,6 @@ proxy_args = SimpleNamespace(
 )
 proxy_args.auth_url = f"{proxy_args.username}:{proxy_args.password}@{proxy_args.endpoint}:{proxy_args.port}"
 
-selenium_driver = Driver(uc=True, headless2=True, proxy=proxy_args.auth_url)
-
 for _ in range(3):
     selenium_driver = Driver(uc=True, headless2=True, proxy=proxy_args.auth_url)
     selenium_driver.uc_open_with_reconnect("https://ipinfo.io/ip", 3)
