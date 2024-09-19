@@ -99,6 +99,7 @@ snippets
 │   ├── regex
 │   │   └── extract_domain_from_website_url.py
 │   ├── selenium
+│   │   ├── ip_rotation_with_auth_proxy_server.py
 │   │   └── selenium_on_gcp_dev_util.py
 │   ├── spark
 │   │   └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
@@ -108,5 +109,5 @@ snippets
     └── gcp
         └── create_gcp_service_account.md
 
-37 directories, 53 files
+37 directories, 54 files
 ```
