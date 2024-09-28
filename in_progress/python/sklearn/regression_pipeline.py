@@ -1,7 +1,7 @@
 """
 TAGS: fit|learning|machine|machine learning|ml|model|models|predict|predictive|regression|scikit-learn|sklearn|train
 DESCRIPTION: An example of a regression pipeline in scikit-learn
-REQUIREMENTS: pip install 'pandas==2.2.2' 'polars==1.6.0' 'pyarrow==17.0.0' 'scikit-learn==1.5.1' 'seaborn==0.13.2' 'shap==0.46.0'
+REQUIREMENTS: pip install pandas polars pyarrow scikit-learn seaborn shap bottleneck numexpr
 NOTES: In a future iteration, I want to include a hyperparameter tuning step in this script
 """
 
@@ -19,6 +19,7 @@ from sklearn import linear_model
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.metrics import accuracy_score, mean_absolute_error
 from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
@@ -27,6 +28,8 @@ from sklearn.preprocessing import (
     SplineTransformer,
     StandardScaler,
 )
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from tqdm import tqdm
 
 pl.Config.set_tbl_cols(15)  # show up to 15 columns in table display
 
@@ -66,12 +69,24 @@ print(
 
 # data splitting #
 df = df.collect()
-X = df.drop("price")
-y = df.select("price")
-X = X.to_pandas()  # I'm not happy about this
-y = y.to_pandas()["price"].to_numpy()  # I'm not happy about this
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.1, random_state=69420
+df = df.to_pandas()  # I'm not happy about this
+X = df.drop("price", axis=1)
+y = df["price"].to_numpy()
+df_train_valid, df_test, X_train_valid, X_test, y_train_valid, y_test = (
+    train_test_split(df, X, y, test_size=0.1, random_state=69420)
+)
+df_train, df_valid, X_train, X_valid, y_train, y_valid = train_test_split(
+    df_train_valid, X_train_valid, y_train_valid, test_size=0.5, random_state=42069
+)
+print(
+    f"""
+-- Summary of data splits -- 
+
+Training:   {X_train.shape[0]:,} rows ({(100*X_train.shape[0]/df.shape[0]):,.1f}%)
+Validation: {X_valid.shape[0]:,} rows ({(100*X_valid.shape[0]/df.shape[0]):,.1f}%)
+Testing:    {X_test.shape[0]:,} rows ({(100*X_test.shape[0]/df.shape[0]):,.1f}%)
+TOTAL:      {df.shape[0]:,} rows
+"""
 )
 
 numeric_feature_colnames: set[str] = set()
@@ -92,10 +107,148 @@ Response is: {response_colname}
 """
 )
 
-# assess relationships between features (and response) using predictive power score #
-for colname_1, colname_2 in itertools.combinations(df.columns, 2):
-    if df[colname_1]
-    print(colname)
+# assess relationships between features (and response) using x2y metric (predictive power score) #
+x2y_decision_tree_regressor_kwargs = {"max_depth": 5}
+x2y_decision_tree_classifier_kwargs = {"max_depth": 5}
+x2y_classification_pipeline = Pipeline(
+    steps=[
+        (
+            "one_hot",
+            ColumnTransformer(
+                transformers=[
+                    (
+                        "cat",
+                        OneHotEncoder(),
+                        make_column_selector(dtype_include=object),
+                    ),
+                ],
+                remainder="passthrough",
+            ),
+        ),
+        (
+            "classifier",
+            DecisionTreeClassifier(**x2y_decision_tree_classifier_kwargs),
+        ),
+    ]
+)
+x2y_regression_pipeline = Pipeline(
+    steps=[
+        (
+            "one_hot",
+            ColumnTransformer(
+                transformers=[
+                    (
+                        "cat",
+                        OneHotEncoder(),
+                        make_column_selector(dtype_include=object),
+                    ),
+                ],
+                remainder="passthrough",
+            ),
+        ),
+        (
+            "regressor",
+            DecisionTreeRegressor(**x2y_decision_tree_regressor_kwargs),
+        ),
+    ]
+)
+result_df_rows_numeric_y: list[pd.DataFrame] = []
+result_df_rows_categorical_y: list[pd.DataFrame] = []
+# predict every numeric column #
+for x_colname in tqdm(df_train.columns):
+    for y_colname in ["price"] + list(numeric_feature_colnames):
+        if x_colname == y_colname:
+            continue
+        x = df_train[[x_colname]]
+        y = df_train[[y_colname]]
+        x_outsample = df_valid[[x_colname]]
+        y_outsample = df_valid[[y_colname]]
+        baseline_preds_y_outsample = (
+            # just predict the mean every time
+            y[y_colname].mean()
+            * np.ones((y_outsample.shape[0], 1))
+        )
+        pipeline = x2y_regression_pipeline
+        pipeline.fit(x, y)
+        model_preds_y_outsample = pipeline.predict(x_outsample)
+        baseline_outsample_mae = mean_absolute_error(
+            y_outsample, baseline_preds_y_outsample
+        )
+        model_outsample_mae = mean_absolute_error(y_outsample, model_preds_y_outsample)
+        result_df_rows_numeric_y.append(
+            pd.DataFrame(
+                {
+                    "x": x_colname,
+                    "y": y_colname,
+                    "metric": "Mean Absolute Error",
+                    "metric_baseline": baseline_outsample_mae,
+                    "metric_model": model_outsample_mae,
+                    "metric_ratio": baseline_outsample_mae / model_outsample_mae,
+                },
+                index=[0],
+            )
+        )
+# predict every categorical column #
+for x_colname in tqdm(df_train.columns):
+    for y_colname in list(categorical_feature_colnames):
+        if x_colname == y_colname:
+            continue
+        x = df_train[[x_colname]]
+        y = df_train[[y_colname]]
+        x_outsample = df_valid[[x_colname]]
+        y_outsample = df_valid[[y_colname]]
+        baseline_preds_y_outsample = (
+            # just predict the most common label each time
+            np.array([y[y_colname].mode()[0]] * y.shape[0])
+        )
+        pipeline = x2y_classification_pipeline
+        pipeline.fit(x, y)
+        model_preds_y_outsample = pipeline.predict(x_outsample)
+        baseline_outsample_accuracy = accuracy_score(
+            y_outsample,
+            baseline_preds_y_outsample,
+        )
+        model_outsample_accuracy = accuracy_score(
+            y_outsample,
+            model_preds_y_outsample,
+        )
+        result_df_rows_categorical_y.append(
+            pd.DataFrame(
+                {
+                    "x": x_colname,
+                    "y": y_colname,
+                    "metric": "Accuracy",
+                    "metric_baseline": baseline_outsample_accuracy,
+                    "metric_model": model_outsample_accuracy,
+                    "metric_ratio": model_outsample_accuracy
+                    / baseline_outsample_accuracy,
+                },
+                index=[0],
+            )
+        )
+# x2y heatmap for numeric y #
+x2y_numeric_y_df = pd.concat(result_df_rows_numeric_y, axis=0)
+heatmap_data = x2y_numeric_y_df.pivot(index="x", columns="y", values="metric_ratio")
+plt.figure(figsize=(8, 6))
+sns.heatmap(heatmap_data, annot=True, cmap="YlGnBu", cbar=True)
+plt.suptitle("x2y score (numeric Y variables only)")
+plt.title("(how well does each X individually predict each Y)")
+plt.ylabel("predictor (x)")
+plt.xlabel("predicted (y)")
+plt.tight_layout()
+plt.show()
+# x2y heatmap for categorical y #
+x2y_categorical_y_df = pd.concat(result_df_rows_categorical_y, axis=0)
+heatmap_data = x2y_categorical_y_df.pivot(index="x", columns="y", values="metric_ratio")
+plt.figure(figsize=(8, 6))
+sns.heatmap(heatmap_data, annot=True, cmap="YlGnBu", cbar=True)
+plt.suptitle("x2y score (categorical Y variables only)")
+plt.title("(how well does each X individually predict each Y)")
+plt.ylabel("predictor (x)")
+plt.xlabel("predicted (y)")
+plt.tight_layout()
+plt.show()
+
 
 # data pre-processing #
 numeric_transformer = Pipeline(
