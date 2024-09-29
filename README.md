@@ -56,10 +56,12 @@ snippets
 │   ├── email
 │   │   └── extract_info_from_mime_string.py
 │   ├── gcp
-│   │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
 │   │   ├── authorizing_rest_api_calls_to_gcp_resources.py
-│   │   ├── bigquery_to_local_jsonl.py
-│   │   ├── bigquery_to_python.py
+│   │   ├── bigquery
+│   │   │   ├── all_bigquery_tables_to_cloud_storage_jsonl.py
+│   │   │   ├── bigquery_to_local_jsonl.py
+│   │   │   ├── bigquery_to_python.py
+│   │   │   └── python_to_bigquery.py
 │   │   ├── cloud_storage
 │   │   │   ├── cloud_storage_to_python.py
 │   │   │   ├── list_filepaths_in_cloud_storage_bucket.py
@@ -109,5 +111,5 @@ snippets
     └── gcp
         └── create_gcp_service_account.md
 
-37 directories, 54 files
+38 directories, 55 files
 ```
