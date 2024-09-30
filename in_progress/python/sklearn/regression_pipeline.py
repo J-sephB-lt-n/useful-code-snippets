@@ -1,7 +1,7 @@
 """
 TAGS: fit|learning|machine|machine learning|ml|model|models|predict|predictive|regression|scikit-learn|sklearn|train
 DESCRIPTION: An example of a regression pipeline in scikit-learn
-REQUIREMENTS: pip install pandas polars pyarrow scikit-learn seaborn shap bottleneck numexpr
+REQUIREMENTS: pip install pandas polars pyarrow scikit-learn seaborn shap # bottleneck numexpr
 NOTES: In a future iteration, I want to include a hyperparameter tuning step in this script
 """
 
@@ -66,6 +66,32 @@ print(
     "--data summary--\n",
     df.describe(),
 )
+
+
+# some utility functions #
+def univariate_prediction_plot(
+    x: list[str | float | int],
+    y_pred: list[str | float | int],
+    y_true: list[str | float | int],
+    x_colname: str,
+    y_colname: str,
+) -> None:
+    """Takes in a 1-D list of values of a single feature `x` (either labels or numbers),
+    a 1-D list of predictions `y_pred` (either labels or numbers) and a
+    1-D list of true outcome values `y_true` (either labels or numbers) and
+    displays a matplotlib visualisation of this data"""
+    plt.figure(figsize=(10, 6))
+    if isinstance(x[0], (int, float)) and isinstance(y_pred[0], (int, float)):
+        plt.scatter(x, y_true, label="True", color="blue", alpha=1.0, s=5)
+        plt.scatter(x, y_pred, label="Predicted", color="red", alpha=0.6, s=5)
+        plt.xlabel(f"X ({x_colname})")
+        plt.ylabel(f"Y ({y_colname})")
+        plt.legend()
+        plt.title(
+            f"Numeric X ({x_colname}), Numeric Y ({y_colname}): True vs Predicted"
+        )
+    plt.show()
+
 
 # data splitting #
 df = df.collect()
@@ -154,6 +180,17 @@ x2y_regression_pipeline = Pipeline(
 )
 result_df_rows_numeric_y: list[pd.DataFrame] = []
 result_df_rows_categorical_y: list[pd.DataFrame] = []
+plot_y_names: list[str] = [
+    # if predicted y appears in this list, then a prediction plot is displayed
+    # pass an empty list to generate no plots
+    "price",
+    "carat",
+    "depth",
+    "length",
+    "width",
+    "table",
+    "depth_percent",
+]
 # predict every numeric column #
 for x_colname in tqdm(df_train.columns):
     for y_colname in ["price"] + list(numeric_feature_colnames):
@@ -188,6 +225,14 @@ for x_colname in tqdm(df_train.columns):
                 index=[0],
             )
         )
+        if y_colname in plot_y_names:
+            univariate_prediction_plot(
+                x=x_outsample[x_colname].tolist(),
+                y_pred=model_preds_y_outsample.tolist(),
+                y_true=y_outsample[y_colname].tolist(),
+                x_colname=x_colname,
+                y_colname=y_colname,
+            )
 # predict every categorical column #
 for x_colname in tqdm(df_train.columns):
     for y_colname in list(categorical_feature_colnames):
