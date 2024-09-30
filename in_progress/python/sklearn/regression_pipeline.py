@@ -6,6 +6,7 @@ NOTES: In a future iteration, I want to include a hyperparameter tuning step in 
 """
 
 import itertools
+import random
 import time
 from typing import Final
 
@@ -75,6 +76,8 @@ def univariate_prediction_plot(
     y_true: list[str | float | int],
     x_colname: str,
     y_colname: str,
+    metric_name: str,
+    metric_value: int | float,
 ) -> None:
     """Takes in a 1-D list of values of a single feature `x` (either labels or numbers),
     a 1-D list of predictions `y_pred` (either labels or numbers) and a
@@ -89,8 +92,50 @@ def univariate_prediction_plot(
         plt.ylabel(f"Y ({y_colname})")
         plt.legend()
         plt.title(
-            f"Numeric X ({x_colname}), Numeric Y ({y_colname}): True vs Predicted"
+            f"Performance of numeric X ({x_colname}) predicting numeric Y ({y_colname}): True vs Predicted\n"
+            f"{metric_name}: {metric_value:,.2f}",
         )
+    elif isinstance(x[0], (int, float)) and isinstance(y_pred[0], str):
+        category_nums_map: dict[str, int] = {
+            label: num for num, label in enumerate(set(y_true))
+        }
+        y_true_nums_jittered: list[float] = [
+            category_nums_map[y_i] + random.uniform(-0.4, 0.4) for y_i in y_true
+        ]
+        mismatches_x = []
+        mismatches_y = []
+        for x_i, y_pred_i, y_true_i, y_true_num_jit_i in zip(
+            x, y_pred, y_true, y_true_nums_jittered
+        ):
+            if y_pred_i != y_true_i:
+                mismatches_x.append(x_i)
+                mismatches_y.append(y_true_num_jit_i)
+        plt.scatter(
+            x,
+            y_true_nums_jittered,
+            color="blue",
+            alpha=1.0,
+            s=2,
+            label="Correct Prediction",
+        )
+        plt.scatter(
+            mismatches_x,
+            mismatches_y,
+            color="red",
+            alpha=1.0,
+            s=2,
+            label="Incorrect Prediction",
+        )
+        plt.xlabel(f"X ({x_colname})")
+        plt.ylabel(f"Y ({y_colname})")
+        plt.title(
+            f"Performance of numeric X ({x_colname}) predicting categorical Y ({y_colname})\n"
+            f"{metric_name}: {metric_value:,.2f}",
+        )
+        plt.yticks(
+            ticks=range(len(category_nums_map)), labels=list(category_nums_map.keys())
+        )
+        plt.legend()
     elif isinstance(x[0], str) and isinstance(y_pred[0], (int | float)):
         sns.boxplot(
             x=x,
@@ -109,11 +154,30 @@ def univariate_prediction_plot(
             label="Predicted",
             alpha=0.6,
         )
-        plt.xlabel("X (Categorical Feature)")
-        plt.ylabel("Y (Outcome)")
-        plt.title("Categorical X, Numeric Y: Boxplot with Predictions")
+        plt.xlabel(f"X ({x_colname})")
+        plt.ylabel(f"Y ({y_colname})")
+        plt.title(
+            f"Performance of categorical X ({x_colname}) predicting numeric Y ({y_colname})\n"
+            f"{metric_name}: {metric_value:,.2f}"
+        )
         plt.legend()
+    elif isinstance(x[0], str) and isinstance(y_pred[0], str):
+        sns.countplot(x=x, hue=y_true)
+        plt.xlabel("X (Categorical)")
+        plt.ylabel("Count of Y (Categorical)")
+        x_preds = {}
+        for x_i, y_pred_i in zip(x, y_pred):
+            if x_i not in x_preds:
+                x_preds[x_i] = y_pred_i
+        plt.xlabel(f"X ({x_colname})")
+        plt.ylabel(f"Y ({y_colname})")
+        plt.title(
+            f"Performance of categorical X ({x_colname}) predicted categorical Y ({y_colname})\n"
+            f"{metric_name}: {metric_value:,.2f}\n"
+            f"Predictions: {x_preds}"
+        )
 
+    plt.tight_layout()
     plt.show()
 
 
@@ -206,14 +270,18 @@ result_df_rows_numeric_y: list[pd.DataFrame] = []
 result_df_rows_categorical_y: list[pd.DataFrame] = []
 plot_y_names: list[str] = [
     # if predicted y appears in this list, then a prediction plot is displayed
+    #   when that variable is predicted
     # pass an empty list to generate no plots
     "price",
     "carat",
-    "depth",
-    "length",
-    "width",
-    "table",
-    "depth_percent",
+    # "cut",
+    "color",
+    "clarity",
+    # "depth_percent",
+    # "table",
+    # "length",
+    # "width",
+    # "depth",
 ]
 # predict every numeric column #
 for x_colname in tqdm(df_train.columns):
@@ -256,6 +324,8 @@ for x_colname in tqdm(df_train.columns):
                 y_true=y_outsample[y_colname].tolist(),
                 x_colname=x_colname,
                 y_colname=y_colname,
+                metric_name="outsample Mean Absolute Error (MAE)",
+                metric_value=float(model_outsample_mae),
             )
 # predict every categorical column #
 for x_colname in tqdm(df_train.columns):
@@ -295,6 +365,16 @@ for x_colname in tqdm(df_train.columns):
                 index=[0],
             )
         )
+        if y_colname in plot_y_names:
+            univariate_prediction_plot(
+                x=x_outsample[x_colname].tolist(),
+                y_pred=model_preds_y_outsample.tolist(),
+                y_true=y_outsample[y_colname].tolist(),
+                x_colname=x_colname,
+                y_colname=y_colname,
+                metric_name="outsample accuracy",
+                metric_value=model_outsample_accuracy,
+            )
 # x2y heatmap for numeric y #
 x2y_numeric_y_df = pd.concat(result_df_rows_numeric_y, axis=0)
 heatmap_data = x2y_numeric_y_df.pivot(index="x", columns="y", values="metric_ratio")
