@@ -292,14 +292,33 @@ for x_colname in tqdm(df_train.columns):
         y = df_train[[y_colname]]
         x_outsample = df_valid[[x_colname]]
         y_outsample = df_valid[[y_colname]]
+        y_train_global_mean: float = float(y[y_colname].mean())
         baseline_preds_y_outsample = (
             # just predict the mean every time
-            y[y_colname].mean()
+            y_train_global_mean
             * np.ones((y_outsample.shape[0], 1))
         )
-        pipeline = x2y_regression_pipeline
-        pipeline.fit(x, y)
-        model_preds_y_outsample = pipeline.predict(x_outsample)
+        if x_colname in categorical_feature_colnames:
+            # predicted Y is E[Y] within each X label #
+            pred_lookup: dict[str, float] = (
+                df_train.groupby(x_colname)
+                .agg(mean_y=(y_colname, "mean"))
+                .to_dict()["mean_y"]
+            )
+            model_preds_y_outsample: np.ndarray = np.array(
+                [
+                    (
+                        pred_lookup[x_label]
+                        if x_label in pred_lookup
+                        else y_train_global_mean
+                    )
+                    for x_label in x_outsample[x_colname]
+                ]
+            )
+        else:
+            pipeline = x2y_regression_pipeline
+            pipeline.fit(x, y)
+            model_preds_y_outsample: np.ndarray = pipeline.predict(x_outsample)
         baseline_outsample_mae = mean_absolute_error(
             y_outsample, baseline_preds_y_outsample
         )
@@ -336,13 +355,29 @@ for x_colname in tqdm(df_train.columns):
         y = df_train[[y_colname]]
         x_outsample = df_valid[[x_colname]]
         y_outsample = df_valid[[y_colname]]
-        baseline_preds_y_outsample = (
-            # just predict the most common label each time
-            np.array([y[y_colname].mode()[0]] * y.shape[0])
-        )
-        pipeline = x2y_classification_pipeline
-        pipeline.fit(x, y)
-        model_preds_y_outsample = pipeline.predict(x_outsample)
+        y_train_most_common_label: str = [y[y_colname].mode()[0]][0]
+        baseline_preds_y_outsample = np.array([y_train_most_common_label] * y.shape[0])
+        if x_colname in categorical_feature_colnames:
+            # predicted Y is E[Y] within each X label #
+            pred_lookup: dict[str, float] = (
+                df_train.groupby(x_colname)
+                .agg(mode_y=(y_colname, lambda y: y.mode().iloc[0]))
+                .to_dict()["mode_y"]
+            )
+            model_preds_y_outsample: np.ndarray = np.array(
+                [
+                    (
+                        pred_lookup[x_label]
+                        if x_label in pred_lookup
+                        else y_train_most_common_label
+                    )
+                    for x_label in x_outsample[x_colname]
+                ]
+            )
+        else:
+            pipeline = x2y_classification_pipeline
+            pipeline.fit(x, y)
+            model_preds_y_outsample = pipeline.predict(x_outsample)
         baseline_outsample_accuracy = accuracy_score(
             y_outsample,
             baseline_preds_y_outsample,
