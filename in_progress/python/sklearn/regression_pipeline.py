@@ -81,6 +81,7 @@ def univariate_prediction_plot(
     1-D list of true outcome values `y_true` (either labels or numbers) and
     displays a matplotlib visualisation of this data"""
     plt.figure(figsize=(10, 6))
+
     if isinstance(x[0], (int, float)) and isinstance(y_pred[0], (int, float)):
         plt.scatter(x, y_true, label="True", color="blue", alpha=1.0, s=5)
         plt.scatter(x, y_pred, label="Predicted", color="red", alpha=0.6, s=5)
@@ -90,6 +91,29 @@ def univariate_prediction_plot(
         plt.title(
             f"Numeric X ({x_colname}), Numeric Y ({y_colname}): True vs Predicted"
         )
+    elif isinstance(x[0], str) and isinstance(y_pred[0], (int | float)):
+        sns.boxplot(
+            x=x,
+            y=y_true,
+            flierprops={
+                "marker": "o",
+                "markersize": 1,
+                "alpha": 0.6,
+            },
+        )
+        sns.stripplot(
+            x=x,
+            y=y_pred,
+            color="red",
+            jitter=True,
+            label="Predicted",
+            alpha=0.6,
+        )
+        plt.xlabel("X (Categorical Feature)")
+        plt.ylabel("Y (Outcome)")
+        plt.title("Categorical X, Numeric Y: Boxplot with Predictions")
+        plt.legend()
+
     plt.show()
 
 
