@@ -182,10 +182,11 @@ def univariate_prediction_plot(
 
 
 # data splitting #
+response_y_colname: str = "price"
 df = df.collect()
 df = df.to_pandas()  # I'm not happy about this
-X = df.drop("price", axis=1)
-y = df["price"].to_numpy()
+X = df.drop(response_y_colname, axis=1)
+y = df[response_y_colname].to_numpy()
 df_train_valid, df_test, X_train_valid, X_test, y_train_valid, y_test = (
     train_test_split(df, X, y, test_size=0.1, random_state=69420)
 )
@@ -205,7 +206,6 @@ TOTAL:      {df.shape[0]:,} rows
 
 numeric_feature_colnames: set[str] = set()
 categorical_feature_colnames: set[str] = set()
-response_colname: str = "price"
 for colname in X.columns:
     if X[colname].dtype.kind in "iufc":
         numeric_feature_colnames.add(colname)
@@ -217,11 +217,11 @@ Numeric features are: {", ".join(numeric_feature_colnames)}
 
 Categorical features are: {", ".join(categorical_feature_colnames)}
 
-Response is: {response_colname}
+Response is: {response_y_colname}
 """
 )
 
-# assess relationships between features (and response) using x2y metric (predictive power score) #
+# x2y metric (predictive power score): assess dependencies between features #
 x2y_decision_tree_regressor_kwargs = {"max_depth": 5}
 x2y_decision_tree_classifier_kwargs = {"max_depth": 5}
 x2y_classification_pipeline = Pipeline(
@@ -283,9 +283,10 @@ plot_y_names: list[str] = [
     # "width",
     # "depth",
 ]
+
 # predict every numeric column #
 for x_colname in tqdm(df_train.columns):
-    for y_colname in ["price"] + list(numeric_feature_colnames):
+    for y_colname in [response_y_colname] + list(numeric_feature_colnames):
         if x_colname == y_colname:
             continue
         x = df_train[[x_colname]]
@@ -343,9 +344,10 @@ for x_colname in tqdm(df_train.columns):
                 y_true=y_outsample[y_colname].tolist(),
                 x_colname=x_colname,
                 y_colname=y_colname,
-                metric_name="outsample Mean Absolute Error (MAE)",
+                metric_name="outsample MAE",
                 metric_value=float(model_outsample_mae),
             )
+
 # predict every categorical column #
 for x_colname in tqdm(df_train.columns):
     for y_colname in list(categorical_feature_colnames):
@@ -356,7 +358,9 @@ for x_colname in tqdm(df_train.columns):
         x_outsample = df_valid[[x_colname]]
         y_outsample = df_valid[[y_colname]]
         y_train_most_common_label: str = [y[y_colname].mode()[0]][0]
-        baseline_preds_y_outsample = np.array([y_train_most_common_label] * y.shape[0])
+        baseline_preds_y_outsample = np.array(
+            [y_train_most_common_label] * y_outsample.shape[0]
+        )
         if x_colname in categorical_feature_colnames:
             # predicted Y is E[Y] within each X label #
             pred_lookup: dict[str, float] = (
@@ -416,7 +420,7 @@ heatmap_data = x2y_numeric_y_df.pivot(index="x", columns="y", values="metric_rat
 plt.figure(figsize=(8, 6))
 sns.heatmap(heatmap_data, annot=True, cmap="YlGnBu", cbar=True)
 plt.suptitle("x2y score (numeric Y variables only)")
-plt.title("(how well does each X individually predict each Y)")
+plt.title("(model MAE)/(MAE of always predict global mean) for X predicting Y)")
 plt.ylabel("predictor (x)")
 plt.xlabel("predicted (y)")
 plt.tight_layout()
@@ -427,7 +431,9 @@ heatmap_data = x2y_categorical_y_df.pivot(index="x", columns="y", values="metric
 plt.figure(figsize=(8, 6))
 sns.heatmap(heatmap_data, annot=True, cmap="YlGnBu", cbar=True)
 plt.suptitle("x2y score (categorical Y variables only)")
-plt.title("(how well does each X individually predict each Y)")
+plt.title(
+    "(model accuracy)/(accuracy of always predict top category) for X predicting Y"
+)
 plt.ylabel("predictor (x)")
 plt.xlabel("predicted (y)")
 plt.tight_layout()
