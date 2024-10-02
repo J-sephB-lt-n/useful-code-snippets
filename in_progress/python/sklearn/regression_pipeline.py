@@ -770,7 +770,7 @@ X_test_high_absolute_errors_last = pd.concat(
     axis=1,
 ).sort_values("absolute_error")
 
-for x1_name, x2_name in case_both_numeric_features_colnames:
+for x1_name, x2_name in tqdm(case_both_numeric_features_colnames):
     plt.figure(figsize=(12, 6))
     scatter = plt.scatter(
         X_test_high_absolute_errors_last[x1_name],
@@ -788,7 +788,7 @@ for x1_name, x2_name in case_both_numeric_features_colnames:
     )
     plt.show()
 
-for x1_name, x2_name in case_one_numeric_one_categorical_colnames:
+for x1_name, x2_name in tqdm(case_one_numeric_one_categorical_colnames):
     if x1_name in numeric_feature_colnames:
         numeric_feature_name: str = x1_name
         categ_feature_name: str = x2_name
