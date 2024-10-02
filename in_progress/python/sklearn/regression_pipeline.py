@@ -162,6 +162,29 @@ def univariate_prediction_plot(
         )
         plt.legend()
     elif isinstance(x[0], str) and isinstance(y_pred[0], str):
+        # plt.figure(figsize=(10, 6))
+        # from collections import defaultdict
+        #
+        # unique_x_values: set[str] = set(x)
+        # unique_y_values: set[str] = set(y_true)
+        # y_given_x_distribution: dict[str, dict] = {
+        #     x_val: {y_val: 0 for y_val in unique_y_values} for x_val in unique_x_values
+        # }
+        # y_pred_map: dict[str, str] = {
+        #     x_val: pred_y_val for x_val, pred_y_val in zip(x, y_pred)
+        # }
+        # for x_i, y_true_i, y_pred_i in zip(x, y_true, y_pred):
+        #     y_given_x_distribution[x_i][y_true_i] += 1
+        #
+        # bar_width: float = 0.25
+        # multiplier: int = 0
+        # x_tick_nums: list[float] = len(set(x))
+        # for x_i, y_true_i in zip(x_tick_nums, y_true):
+        #     offset = bar_width * multiplier
+        #     rects = plt.bar(x_i + offset, , width, label=y_true_i)
+        #     ax.bar_label(rects, padding=3)
+        #     multiplier += 1
+
         sns.countplot(x=x, hue=y_true)
         plt.xlabel("X (Categorical)")
         plt.ylabel("Count of Y (Categorical)")
@@ -182,6 +205,7 @@ def univariate_prediction_plot(
 
 
 # data splitting #
+# BEWARE: if rows are not 100% independent, you need to do stratified splitting here
 response_y_colname: str = "price"
 df = df.collect()
 df = df.to_pandas()  # I'm not happy about this
@@ -232,7 +256,7 @@ x2y_classification_pipeline = Pipeline(
                 transformers=[
                     (
                         "cat",
-                        OneHotEncoder(),
+                        OneHotEncoder(handle_unknown="ignore"),
                         make_column_selector(dtype_include=object),
                     ),
                 ],
@@ -253,7 +277,7 @@ x2y_regression_pipeline = Pipeline(
                 transformers=[
                     (
                         "cat",
-                        OneHotEncoder(),
+                        OneHotEncoder(handle_unknown="ignore"),
                         make_column_selector(dtype_include=object),
                     ),
                 ],
@@ -268,10 +292,21 @@ x2y_regression_pipeline = Pipeline(
 )
 result_df_rows_numeric_y: list[pd.DataFrame] = []
 result_df_rows_categorical_y: list[pd.DataFrame] = []
-plot_y_names: list[str] = [
-    # if predicted y appears in this list, then a prediction plot is displayed
-    #   when that variable is predicted
-    # pass an empty list to generate no plots
+x_colnames_to_plot: list[str] = [
+    # plots will not be generated for predictors (X) not listed here
+    "price",
+    "carat",
+    # "cut",
+    "color",
+    "clarity",
+    # "depth_percent",
+    # "table",
+    # "length",
+    # "width",
+    # "depth",
+]
+y_colnames_to_plot: list[str] = [
+    # plots will not be generated for responses (Y) not listed here
     "price",
     "carat",
     # "cut",
@@ -337,7 +372,7 @@ for x_colname in tqdm(df_train.columns):
                 index=[0],
             )
         )
-        if y_colname in plot_y_names:
+        if x_colname in x_colnames_to_plot or y_colname in y_colnames_to_plot:
             univariate_prediction_plot(
                 x=x_outsample[x_colname].tolist(),
                 y_pred=model_preds_y_outsample.tolist(),
@@ -404,7 +439,7 @@ for x_colname in tqdm(df_train.columns):
                 index=[0],
             )
         )
-        if y_colname in plot_y_names:
+        if x_colname in x_colnames_to_plot or y_colname in y_colnames_to_plot:
             univariate_prediction_plot(
                 x=x_outsample[x_colname].tolist(),
                 y_pred=model_preds_y_outsample.tolist(),
@@ -414,7 +449,8 @@ for x_colname in tqdm(df_train.columns):
                 metric_name="outsample accuracy",
                 metric_value=model_outsample_accuracy,
             )
-# x2y heatmap for numeric y #
+
+# x2y heatmap predicting numeric y #
 x2y_numeric_y_df = pd.concat(result_df_rows_numeric_y, axis=0)
 heatmap_data = x2y_numeric_y_df.pivot(index="x", columns="y", values="metric_ratio")
 plt.figure(figsize=(8, 6))
@@ -425,7 +461,8 @@ plt.ylabel("predictor (x)")
 plt.xlabel("predicted (y)")
 plt.tight_layout()
 plt.show()
-# x2y heatmap for categorical y #
+
+# x2y heatmap predicting categorical y #
 x2y_categorical_y_df = pd.concat(result_df_rows_categorical_y, axis=0)
 heatmap_data = x2y_categorical_y_df.pivot(index="x", columns="y", values="metric_ratio")
 plt.figure(figsize=(8, 6))
@@ -439,7 +476,6 @@ plt.xlabel("predicted (y)")
 plt.tight_layout()
 plt.show()
 
-
 # data pre-processing #
 numeric_transformer = Pipeline(
     steps=[
@@ -452,7 +488,7 @@ categorical_transformer = Pipeline(
         # ("imputer", SimpleImputer(strategy="most_frequent")),  # Impute missing values
         (
             "onehot",
-            OneHotEncoder(handle_unknown="ignore"),
+            OneHotEncoder(handle_unknown="ignore", sparse_output=False),
         ),
     ]
 )
@@ -509,28 +545,53 @@ splines_data_preprocessor = ColumnTransformer(
     ]
 )
 
-# define some models to compare #
+# In future, I want to do some coarse hyper-parameter tuning of the
+#       candidate model pipelines here (something like bayesian or hyperband)
+#       using the 'training' data partition.
+#   This will give each model a more fair shot when I compare them next
+#       using cross-validation on the 'validation' data partition.
+# For now, I'm simply define the model hyperparameters manually, and
+#       combining the training and validation data:
+X_valid = pd.concat([X_train, X_valid])
+y_valid = np.concatenate([y_train, y_valid])
+pipeline_hyperparams = {
+    "ridge_splines": {},
+    "gbm_hist": {},
+    "extreme_trees": {},
+}
+
+
+# define models to compare #
 pipelines = {
     "ridge_splines": Pipeline(
         steps=[
             ("preprocess_data", splines_data_preprocessor),
             ("add_interaction_terms", interaction_terms_transformer),
             ("feature_selection", VarianceThreshold(threshold=0.0)),
-            ("regressor", linear_model.Ridge()),
+            (
+                "regressor",
+                linear_model.Ridge(**pipeline_hyperparams["ridge_splines"]),
+            ),
         ]
     ),
     "gbm_hist": Pipeline(
         steps=[
             ("preprocess_data", data_preprocessor),
             ("feature_selection", VarianceThreshold(threshold=0.0)),
-            ("regressor", HistGradientBoostingRegressor()),
+            (
+                "regressor",
+                HistGradientBoostingRegressor(**pipeline_hyperparams["gbm_hist"]),
+            ),
         ]
     ),
-    "extremely_randomized_trees": Pipeline(
+    "extreme_trees": Pipeline(
         steps=[
             ("preprocess_data", data_preprocessor),
             ("feature_selection", VarianceThreshold(threshold=0.0)),
-            ("regressor", ExtraTreesRegressor()),
+            (
+                "regressor",
+                ExtraTreesRegressor(**pipeline_hyperparams["extreme_trees"]),
+            ),
         ]
     ),
 }
@@ -542,8 +603,8 @@ for pipeline_name, pipeline in pipelines.items():
     print(f"Started: [{pipeline_name}]")
     cross_valid_results[pipeline_name] = cross_validate(
         estimator=pipeline,
-        X=X_train,
-        y=y_train,
+        X=X_valid,
+        y=y_valid,
         cv=k_folds,
         scoring=[
             "r2",  # R^2 = 'coefficient of determination' = 1 - sum(y_i-y^_i)^2 / sum(y_i-mean(y))^2
@@ -552,6 +613,7 @@ for pipeline_name, pipeline in pipelines.items():
             "neg_root_mean_squared_error",  # - sqrt( mean( (y_true-y_pred)^2 ) )
             "neg_mean_absolute_percentage_error",  # - mean( |y_true-y_pred| / |y_true| )
         ],
+        n_jobs=5,
     )
     print(
         f"\tFinished [{pipeline_name}] in "
@@ -580,7 +642,14 @@ g = sns.FacetGrid(
 for ax in g.axes.flat:
     for label in ax.get_xticklabels():
         label.set_rotation(45)
-g.map(sns.stripplot, "model", "value", jitter=True, dodge=True)
+g.map(
+    sns.stripplot,
+    "model",
+    "value",
+    jitter=True,
+    dodge=True,
+    order=list(pipelines.keys()),
+)
 g.set_titles("{col_name}")
 g.set_axis_labels("Model", "Metric Value")
 g.figure.suptitle(f"Results of {k_folds}-Fold Cross Validation", fontsize=16)
@@ -594,34 +663,38 @@ fit_start_time: float = time.perf_counter()
 final_model.fit(X_train, y_train)
 fit_end_time: float = time.perf_counter()
 print(f"Model finished training in {(fit_end_time-fit_start_time):,.2f} seconds")
-preds_traindata: np.ndarray = final_model.predict(X_train)
+preds_validdata: np.ndarray = final_model.predict(X_valid)
 preds_testdata: np.ndarray = final_model.predict(X_test)
 
 # visualise distributions of prediction errors #
-errors_traindata: np.ndarray = preds_traindata - y_train
+errors_validdata: np.ndarray = preds_validdata - y_valid
 errors_testdata: np.ndarray = preds_testdata - y_test
-percentage_errors_traindata: np.ndarray = (preds_traindata - y_train) / y_train
+percentage_errors_validdata: np.ndarray = (preds_validdata - y_valid) / y_valid
 percentage_errors_testdata: np.ndarray = (preds_testdata - y_test) / y_test
-absolute_errors_traindata = np.abs(errors_traindata)
+absolute_errors_validdata = np.abs(errors_validdata)
 absolute_errors_testdata = np.abs(errors_testdata)
 
-sns.histplot(errors_traindata, bins=100, kde=True, color="red")
-plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Training data")
+plt.figure(figsize=(8, 5))
+sns.histplot(errors_validdata, bins=100, kde=True, color="red")
+plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on model Training data")
 plt.xlabel(r"Error ($\hat{y}-y$)")
 plt.show()
 
+plt.figure(figsize=(8, 5))
 sns.histplot(errors_testdata, bins=100, kde=True, color="red")
 plt.title(r"Distribution of prediction errors ($\hat{y} - y$) on Test (unseen) data")
 plt.xlabel(r"Error ($\hat{y}-y$)")
 plt.show()
 
-sns.histplot(percentage_errors_traindata, bins=100, kde=True, color="red")
+plt.figure(figsize=(8, 5))
+sns.histplot(percentage_errors_validdata, bins=100, kde=True, color="red")
 plt.title(
-    r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on Training data"
+    r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on model Training data"
 )
 plt.xlabel(r"% Error ($\frac{\hat{y}-y}{y}$)")
 plt.show()
 
+plt.figure(figsize=(8, 5))
 sns.histplot(percentage_errors_testdata, bins=100, kde=True, color="red")
 plt.title(
     r"Distribution of prediction % errors ($\frac{\hat{y} - y}{y}$) on Test (unseen) data"
@@ -643,6 +716,7 @@ for colname in numeric_feature_colnames:
 
 SHOW_OUTLIERS_ON_BOXPLOT: Final[bool] = False
 for colname in categorical_feature_colnames:
+    plt.figure(figsize=(12, 6))
     sns.boxplot(
         x=colname,
         y="error",
@@ -660,6 +734,8 @@ for colname in categorical_feature_colnames:
     plt.title(
         f"Distribution of prediction errors within each level of feature '{colname}' (unseen test data) [displayOutliers={SHOW_OUTLIERS_ON_BOXPLOT}]"
     )
+    plt.xticks(rotation=45)
+    plt.tight_layout()
     plt.show()
 
 # look for bivariate areas of the feature space with large errors #
@@ -771,6 +847,8 @@ for x1_name, x2_name in case_both_categorical_colnames:
     plt.ylabel(x1_name)
     plt.show()
 
+# Feature Importance #
+
 
 # investigate feature effects on prediction (SHAP values) #
 def predict_for_kernel_shap(x_in: np.ndarray) -> np.ndarray:
@@ -794,5 +872,7 @@ shap_values_end_time: float = time.perf_counter()
 print(
     f"Finished calculating {len(X_train_sample)} SHAP values in {(shap_values_end_time-shap_values_start_time)/60:,.2f} minutes"
 )
-for feature_name in X_train:
+for feature_name in tqdm(X_train.columns):
+    # note: to save each plot to a file, include show=False in shap.dependence_plot()
+    #           and then use plt.savefig()
     shap.dependence_plot(feature_name, shap_values.values, X_train_sample)
