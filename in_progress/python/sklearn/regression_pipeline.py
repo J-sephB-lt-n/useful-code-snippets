@@ -20,6 +20,7 @@ from sklearn import linear_model
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
 from sklearn.feature_selection import VarianceThreshold
+from sklearn.inspection import permutation_importance
 from sklearn.metrics import accuracy_score, mean_absolute_error
 from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
@@ -847,7 +848,43 @@ for x1_name, x2_name in case_both_categorical_colnames:
     plt.ylabel(x1_name)
     plt.show()
 
-# Feature Importance #
+# Permutation Feature Importance #
+#   TODO: Quick explanation here of what permutation feature importance is
+#   Pros of this approach:
+#       - Model agnostic
+#       - Provides a measure of variance of the feature importance
+#   Cons of this approach:
+#       - If there are correlated features, then this can result in
+#           actually important features being shown as not important
+#   Other notes:
+#       - Permutation feature importance measures how import features are
+#           TO THE MODEL - they do NOT measure how predictive the features
+#           are in general
+#   References:
+#       - https://scikit-learn.org/1.5/modules/permutation_importance.html
+#       - https://scikit-learn.org/1.5/auto_examples/inspection/plot_permutation_importance_multicollinear.html
+permutation_feature_importance = permutation_importance(
+    estimator=final_model,
+    X=X_test,
+    y=y_test,
+    scoring="neg_mean_absolute_error",
+    n_repeats=5,  # number of times to permute a feature
+    max_samples=1.0,  # proportion of dataset to use in each repeat
+    n_jobs=4,
+)
+sorted_importances_idx = permutation_feature_importance.importances_mean.argsort()
+importances = pd.DataFrame(
+    permutation_feature_importance.importances[sorted_importances_idx].T,
+    columns=X.columns[sorted_importances_idx],
+)
+plt.figure(figsize=(12, 6))
+ax = importances.plot.box(vert=False, whis=10, figsize=(12, 6))
+ax.set_title("Permutation Feature Importances (test set)")
+ax.axvline(x=0, color="k", linestyle="--")
+ax.set_xlabel("Increase in MAE under feature permutation")
+ax.figure.tight_layout()
+plt.show()
+plt.clf()
 
 
 # investigate feature effects on prediction (SHAP values) #
