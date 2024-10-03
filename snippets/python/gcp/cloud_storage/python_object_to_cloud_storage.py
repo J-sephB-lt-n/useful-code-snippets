@@ -15,6 +15,7 @@ gcp_storage_client = (
 gcp_storage_bucket = gcp_storage_client.bucket("your-bucket-name")
 
 gcp_storage_bucket.blob("desired/output/path/myfile.json").upload_from_string(
+    # or alternatively can use .upload_from_bytes()
     data=json.dumps({"joe": ["is", "the", "best"]}),
     content_type="application/json",
 )
