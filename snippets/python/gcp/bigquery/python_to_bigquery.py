@@ -1,8 +1,8 @@
 """
-TAGS: bigquery|cloud|gcloud|gcp|google|google cloud|python|write
-DESCRIPTION: Write data (a list of dicts) from python memory into a BigQuery table (including code for creating or emptying the table) 
+TAGS: append|bigquery|cloud|gcloud|gcp|google|google cloud|insert|python|rows|write
+DESCRIPTION: Write (append) data (a list of dicts) from python memory into a BigQuery table (including code for creating or emptying the table) 
 REQUIREMENTS: pip install google-cloud-bigquery
-NOTE: inserts exceeding 10MB are rejected (break into multiple insert requests)
+NOTE: inserts exceeding 10MB are rejected (rather break into multiple insert requests)
 """
 
 import datetime
