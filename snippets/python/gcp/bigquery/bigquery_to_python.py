@@ -1,5 +1,5 @@
 """
-TAGS: bigquery|client|local|dict|gcloud|gcp|google|google cloud|python|python client|query|sql 
+TAGS: bigquery|client|local|dict|download|gcloud|gcp|get|google|google cloud|python|python client|query|read|sql
 DESCRIPTION: Run a query on GCP BigQuery from python, getting the result in python memory as a list of dictionaries 
 REQUIREMENTS: pip install google-cloud-bigquery 
 """
