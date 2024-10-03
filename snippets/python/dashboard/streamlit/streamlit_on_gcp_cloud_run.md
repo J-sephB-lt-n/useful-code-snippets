@@ -4,6 +4,7 @@ DESCRIPTION: Deploy a streamlit dashboard on a Google Cloud Run service, and inc
 ```
 
 Directory structure:
+
 ```bash
 streamlit_on_gcp_cloud_run/
 ├── Dockerfile
@@ -14,12 +15,13 @@ streamlit_on_gcp_cloud_run/
 ```
 
 Deploy from terminal:
+
 ```bash
-$ GCP_PROJ_ID="your project ID"
-$ GCP_REGION_NAME="desired region for your cloud run service e.g. europe-west12"
-$ GCP_ARTIFACT_REG_REPO_NAME="name of existing docker repository in GCP artifact registry"
-$ API_NAME="desired name for cloud run service"
-$ source build_deploy_cloud_run.sh
+GCP_PROJ_ID="your project ID"
+GCP_REGION_NAME="desired region for your cloud run service e.g. europe-west12"
+GCP_ARTIFACT_REG_REPO_NAME="name of existing docker repository in GCP artifact registry"
+API_NAME="desired name for cloud run service"
+source build_deploy_cloud_run.sh
 ```
 
 ```dockerfile
@@ -39,8 +41,11 @@ gcloud config set project $GCP_PROJ_ID
 gcloud config set run/region $GCP_REGION_NAME
 docker_image_name=$GCP_REGION_NAME-docker.pkg.dev/$GCP_PROJ_ID/$GCP_ARTIFACT_REG_REPO_NAME/$API_NAME
 echo "started build: $(date)"
+build_start_time=$(date +%s)
 gcloud builds submit --tag $docker_image_name
+build_end_time=$(date +%s)
 echo "started deploy: $(date)"
+deploy_start_time=$(date +%s)
 gcloud run deploy $API_NAME \
     --image $docker_image_name \
     --max-instances 1 \
@@ -48,6 +53,7 @@ gcloud run deploy $API_NAME \
     --allow-unauthenticated \
     --timeout 600 \
     --ingress all
+deploy_end_time=$(date +%s)
 echo "finished: $(date)"
 ```
 
