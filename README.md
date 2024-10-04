@@ -27,6 +27,8 @@ snippets
 │   │   └── setup_python_on_ec2_virtual_machine.sh
 │   ├── llm
 │   │   └── host_local_models_with_llama_cpp.sh
+│   ├── misc
+│   │   └── time_sections_in_bash_script.sh
 │   └── ubuntu
 │       └── install_chrome_browser_on_ubuntu.sh
 ├── css
@@ -53,6 +55,8 @@ snippets
 │   │   └── native_groupby_agg.py
 │   ├── database
 │   │   └── basic_shelve_usage.py
+│   ├── duckdb
+│   │   └── gcp_bigquery_to_duckdb.md
 │   ├── email
 │   │   └── extract_info_from_mime_string.py
 │   ├── gcp
@@ -111,5 +115,5 @@ snippets
     └── gcp
         └── create_gcp_service_account.md
 
-38 directories, 55 files
+40 directories, 57 files
 ```
