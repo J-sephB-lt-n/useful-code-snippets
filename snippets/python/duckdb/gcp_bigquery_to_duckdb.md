@@ -1,5 +1,5 @@
 ```
-TAGS: analytics|backend|bigquery|cloud|data|database|data warehouse|db|duckdb|gcloud|gcp|google|google cloud|google bigquery|local|query|sql|sqlite
+TAGS: analytics|backend|bigquery|cloud|data|database|data warehouse|db|duckdb|gcloud|gcp|google|google cloud|google bigquery|local|parquet|query|sql|sqlite|storage
 DESCRIPTION: Copy a BigQuery table into local parquet files and query the parquet files directly using DuckDB
 REQUIREMENTS: pip install duckdb
 NOTES: For my use-case (bigquery table with 8.5 million rows and 58 columns), DuckDB was 118x faster than BigQuery for the same query (0.00532 seconds vs 0.628 seconds)
