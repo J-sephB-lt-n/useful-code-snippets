@@ -142,13 +142,14 @@ def build_pipeline(
                     ),
                 )
             )
-        transformers.append(
-            (
-                "numeric",
-                Pipeline(numeric_transformers),
-                numeric_colnames,
+        if numeric_transformers:
+            transformers.append(
+                (
+                    "numeric",
+                    Pipeline(numeric_transformers),
+                    numeric_colnames,
+                )
             )
-        )
 
     if categorical_colnames:
         categorical_transformers = []
@@ -166,25 +167,48 @@ def build_pipeline(
             )
         )
 
-    return Pipeline(
-        steps=[
-            (
-                "preprocess_data",
-                ColumnTransformer(transformers),
-            ),
-            (
-                "model",
-                model,
-            ),
-        ]
-    )
+    if not transformers:
+        return Pipeline(
+            steps=[
+                (
+                    "model",
+                    model,
+                ),
+            ]
+        )
+    else:
+        return Pipeline(
+            steps=[
+                (
+                    "preprocess_data",
+                    ColumnTransformer(transformers),
+                ),
+                (
+                    "model",
+                    model,
+                ),
+            ]
+        )
 
 
 def objective_func(trial):
     model_choice: str = trial.suggest_categorical("model", ["hist_gbm", "ridge"])
     if model_choice == "ridge":
+        column_subset_X_train = X_train[
+            [
+                "MedInc",
+                "HouseAge",
+                "AveRooms",
+                "AveBedrms",
+                "Population",
+                "AveOccup",
+                # "Latitude",
+                # "Longitude",
+                "geo_block",
+            ]
+        ]
         model = linear_model.Ridge(
-            alpha=trial.suggest_float("alpha", 0, 100, log=True),
+            alpha=trial.suggest_float("alpha", 0.001, 100, log=True),
         )
         include_splines: bool = trial.suggest_categorical(
             "include_splines", [True, False]
@@ -195,6 +219,19 @@ def objective_func(trial):
             "interaction_terms", [True, False]
         )
     elif model_choice == "hist_gbm":
+        column_subset_X_train = X_train[
+            [
+                "MedInc",
+                "HouseAge",
+                "AveRooms",
+                "AveBedrms",
+                "Population",
+                "AveOccup",
+                "Latitude",
+                "Longitude",
+                # "geo_block",
+            ]
+        ]
         limit_max_depth: bool = trial.suggest_categorical(
             "limit_max_depth", [True, False]
         )
@@ -226,7 +263,7 @@ def objective_func(trial):
     )
     cv_results = cross_validate(
         estimator=model_pipeline,
-        X=X_train,
+        X=column_subset_X_train,
         y=y_train,
         cv=10,  # number of folds
         scoring=[
