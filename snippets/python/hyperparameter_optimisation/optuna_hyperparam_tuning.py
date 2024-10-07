@@ -1,6 +1,6 @@
 """
-TAGS: optim|optimisation|optimization|hyperparameter|hyperparameter optimisation|optuna
-DESCRIPTION: TODO
+TAGS: bayesian|hyperparameter|hyperparameter optimisation|optim|optimisation|optimization|optuna
+DESCRIPTION: Example usage of optuna for hyperparameter optimisation and model selection
 REQUIREMENTS: pip install optuna scikit-learn seaborn 
 """
 
@@ -11,7 +11,6 @@ import numpy as np
 import optuna
 import pandas as pd
 import seaborn as sns
-from seaborn._core.typing import default
 import sklearn.base
 from sklearn import linear_model
 from sklearn.compose import ColumnTransformer
@@ -217,8 +216,7 @@ def build_pipeline(
 
 
 def objective_func(trial):
-    # model_choice: str = trial.suggest_categorical("model", ["hist_gbm", "ridge"])
-    model_choice: str = trial.suggest_categorical("model", ["ridge", "ridge"])
+    model_choice: str = trial.suggest_categorical("model", ["hist_gbm", "ridge"])
     if model_choice == "ridge":
         column_subset_X_train = X_train[X_colnames_for_linear_models]
         model = linear_model.Ridge(
