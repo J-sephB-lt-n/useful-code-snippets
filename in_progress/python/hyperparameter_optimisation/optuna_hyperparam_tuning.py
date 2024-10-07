@@ -11,6 +11,7 @@ import numpy as np
 import optuna
 import pandas as pd
 import seaborn as sns
+from seaborn._core.typing import default
 import sklearn.base
 from sklearn import linear_model
 from sklearn.compose import ColumnTransformer
@@ -64,14 +65,38 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=80085,
 )
 
+X_colnames_for_linear_models: list[str] = [
+    "MedInc",
+    "HouseAge",
+    "AveRooms",
+    "AveBedrms",
+    "Population",
+    "AveOccup",
+    # "Latitude",
+    # "Longitude",
+    "geo_block",
+]
+
+X_colnames_for_tree_models: list[str] = [
+    "MedInc",
+    "HouseAge",
+    "AveRooms",
+    "AveBedrms",
+    "Population",
+    "AveOccup",
+    "Latitude",
+    "Longitude",
+    # "geo_block",
+]
+
 
 def build_pipeline(
     include_standard_scaler: bool,
     include_splines: bool,
-    spline_degree: Optional[int],
-    spline_n_knots: Optional[int],
-    include_interaction_terms: bool,
-    model: sklearn.base.RegressorMixin,
+    spline_degree: Optional[int] = None,
+    spline_n_knots: Optional[int] = None,
+    include_interaction_terms: bool = False,
+    model: sklearn.base.RegressorMixin = linear_model.Ridge,
 ) -> Pipeline:
     """Returns a regression pipeline with the specified components and regression model
 
@@ -192,21 +217,10 @@ def build_pipeline(
 
 
 def objective_func(trial):
-    model_choice: str = trial.suggest_categorical("model", ["hist_gbm", "ridge"])
+    # model_choice: str = trial.suggest_categorical("model", ["hist_gbm", "ridge"])
+    model_choice: str = trial.suggest_categorical("model", ["ridge", "ridge"])
     if model_choice == "ridge":
-        column_subset_X_train = X_train[
-            [
-                "MedInc",
-                "HouseAge",
-                "AveRooms",
-                "AveBedrms",
-                "Population",
-                "AveOccup",
-                # "Latitude",
-                # "Longitude",
-                "geo_block",
-            ]
-        ]
+        column_subset_X_train = X_train[X_colnames_for_linear_models]
         model = linear_model.Ridge(
             alpha=trial.suggest_float("alpha", 0.001, 100, log=True),
         )
@@ -219,19 +233,7 @@ def objective_func(trial):
             "interaction_terms", [True, False]
         )
     elif model_choice == "hist_gbm":
-        column_subset_X_train = X_train[
-            [
-                "MedInc",
-                "HouseAge",
-                "AveRooms",
-                "AveBedrms",
-                "Population",
-                "AveOccup",
-                "Latitude",
-                "Longitude",
-                # "geo_block",
-            ]
-        ]
+        column_subset_X_train = X_train[X_colnames_for_tree_models]
         limit_max_depth: bool = trial.suggest_categorical(
             "limit_max_depth", [True, False]
         )
@@ -280,3 +282,70 @@ def objective_func(trial):
 
 optuna_study = optuna.create_study()
 optuna_study.optimize(objective_func, n_trials=100)
+
+if optuna_study.best_params["model"] == "ridge":
+    optimised_pipeline = build_pipeline(
+        include_standard_scaler=optuna_study.best_params["scale_data"],
+        include_splines=optuna_study.best_params["include_splines"],
+        spline_degree=optuna_study.best_params["spline_degree"],
+        spline_n_knots=optuna_study.best_params["spline_n_knots"],
+        include_interaction_terms=optuna_study.best_params["interaction_terms"],
+        model=linear_model.Ridge(alpha=optuna_study.best_params["alpha"]),
+    )
+    optimised_pipeline.fit(X_train[X_colnames_for_linear_models], y_train)
+    y_preds_optimised_pipeline: np.ndarray = optimised_pipeline.predict(
+        X_test[X_colnames_for_linear_models]
+    )
+elif optuna_study.best_params["model"] == "hist_gbm":
+    optimised_pipeline = build_pipeline(
+        include_standard_scaler=optuna_study.best_params["scale_data"],
+        include_splines=False,
+        model=HistGradientBoostingRegressor(
+            max_depth=optuna_study.best_params.get("max_depth"),
+            learning_rate=optuna_study.best_params["learning_rate"],
+            max_features=optuna_study.best_params["max_features"],
+        ),
+    )
+    optimised_pipeline.fit(X_train[X_colnames_for_tree_models], y_train)
+    y_preds_optimised_pipeline: np.ndarray = optimised_pipeline.predict(
+        X_test[X_colnames_for_tree_models]
+    )
+
+default_ridge_pipeline = build_pipeline(
+    include_standard_scaler=True,
+    include_splines=True,
+    spline_degree=3,
+    spline_n_knots=10,
+    include_interaction_terms=True,
+    model=linear_model.Ridge(),
+)
+default_ridge_pipeline.fit(
+    X_train[X_colnames_for_linear_models],
+    y_train,
+)
+y_preds_default_ridge_pipeline: np.ndarray = default_ridge_pipeline.predict(
+    X_test[X_colnames_for_linear_models]
+)
+default_gbm_pipeline = build_pipeline(
+    include_standard_scaler=False,
+    include_splines=False,
+    include_interaction_terms=False,
+    model=HistGradientBoostingRegressor(),
+)
+default_gbm_pipeline.fit(
+    X_train[X_colnames_for_tree_models],
+    y_train,
+)
+y_preds_default_gbm_pipeline: np.ndarray = default_gbm_pipeline.predict(
+    X_test[X_colnames_for_tree_models]
+)
+
+print(
+    f"""
+-- MAPE on test dataset --
+
+Default ridge pipeline: {float(np.mean( np.abs(y_preds_default_ridge_pipeline - y_test) / y_test )):.3f}
+Default GBM pipeline:   {float(np.mean( np.abs(y_preds_default_gbm_pipeline - y_test) / y_test )):.3f}
+Optimised pipeline:     {float(np.mean( np.abs(y_preds_optimised_pipeline - y_test) / y_test )):.3f}         
+    """
+)
