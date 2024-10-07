@@ -17,9 +17,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_california_housing
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import ColumnTransformer
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
+    OneHotEncoder,
     PolynomialFeatures,
     SplineTransformer,
     StandardScaler,
@@ -72,7 +73,18 @@ def build_pipeline(
     include_interaction_terms: bool,
     model: sklearn.base.RegressorMixin,
 ) -> Pipeline:
-    """Returns a regression pipeline with the specified components and regression model"""
+    """Returns a regression pipeline with the specified components and regression model
+
+    Example:
+        >>> model_pipeline: Pipeline = build_pipeline(
+        ...     include_standard_scaler=True,
+        ...     include_splines=True,
+        ...     spline_degree=3,
+        ...     spline_n_knots=10,
+        ...     include_interaction_terms=True,
+        ...     model=linear_model.Ridge(alpha=1.0),
+        ... )
+    """
     transformers = []  # for data preprocessing
 
     if isinstance(model, linear_model.Ridge):
@@ -168,11 +180,66 @@ def build_pipeline(
     )
 
 
-model_pipeline: Pipeline = build_pipeline(
-    include_standard_scaler=True,
-    include_splines=True,
-    spline_degree=3,
-    spline_n_knots=10,
-    include_interaction_terms=True,
-    model=HistGradientBoostingRegressor(),
-)
+def objective_func(trial):
+    model_choice: str = trial.suggest_categorical("model", ["hist_gbm", "ridge"])
+    if model_choice == "ridge":
+        model = linear_model.Ridge(
+            alpha=trial.suggest_float("alpha", 0, 100, log=True),
+        )
+        include_splines: bool = trial.suggest_categorical(
+            "include_splines", [True, False]
+        )
+        spline_degree: Optional[int] = trial.suggest_int("spline_degree", 2, 5)
+        spline_n_knots: Optional[int] = trial.suggest_int("spline_n_knots", 3, 20)
+        include_interaction_terms: bool = trial.suggest_categorical(
+            "interaction_terms", [True, False]
+        )
+    elif model_choice == "hist_gbm":
+        limit_max_depth: bool = trial.suggest_categorical(
+            "limit_max_depth", [True, False]
+        )
+        if limit_max_depth:
+            max_depth = trial.suggest_int("max_depth", 1, 30)
+        else:
+            max_depth = None
+        model = HistGradientBoostingRegressor(
+            loss="squared_error",
+            learning_rate=trial.suggest_float("learning_rate", 0, 1),
+            # n_estimators=
+            max_depth=max_depth,
+            # min_samples_split 0.1 to 1.0
+            max_features=trial.suggest_float("max_features", 0.5, 1.0),
+        )
+        include_splines: bool = False
+        spline_degree: Optional[int] = None
+        spline_n_knots: Optional[int] = None
+        include_interaction_terms: bool = False
+    else:
+        raise ValueError(f"invalid model choice '{model_choice}'")
+    model_pipeline: Pipeline = build_pipeline(
+        include_standard_scaler=trial.suggest_categorical("scale_data", [True, False]),
+        include_splines=include_splines,
+        spline_degree=spline_degree,
+        spline_n_knots=spline_n_knots,
+        include_interaction_terms=include_interaction_terms,
+        model=model,
+    )
+    cv_results = cross_validate(
+        estimator=model_pipeline,
+        X=X_train,
+        y=y_train,
+        cv=10,  # number of folds
+        scoring=[
+            # "r2",  # R^2 = 'coefficient of determination' = 1 - sum(y_i-y^_i)^2 / sum(y_i-mean(y))^2
+            # "max_error",  # max( |y_true-y_pred| )
+            # "neg_mean_absolute_error",  # - mean( |y_true-y_pred| )
+            # "neg_root_mean_squared_error",  # - sqrt( mean( (y_true-y_pred)^2 ) )
+            "neg_mean_absolute_percentage_error",  # - mean( |y_true-y_pred| / |y_true| )
+        ],
+        n_jobs=5,
+    )
+    return -float(cv_results["test_neg_mean_absolute_percentage_error"].mean())
+
+
+optuna_study = optuna.create_study()
+optuna_study.optimize(objective_func, n_trials=100)
