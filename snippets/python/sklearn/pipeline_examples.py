@@ -183,6 +183,6 @@ test_set_mape = {
     "ridge": np.mean(np.abs(ridge_pipeline_test_preds - y_test) / y_test),
 }
 
-print("--MEAN ABSOLUTE % ERROR (MAPE) ON TEST SET--")
+print("-- MEAN ABSOLUTE % ERROR (MAPE) ON TEST SET --")
 for model_name, mape in test_set_mape.items():
     print(model_name, f"{mape:,.2f}")
