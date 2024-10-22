@@ -1,7 +1,7 @@
 """
 TAGS: fit|learning|machine|machine learning|ml|model|models|predict|predictive|regression|scikit-learn|sklearn|train
 DESCRIPTION: An example of a regression pipeline in scikit-learn
-REQUIREMENTS: pip install pandas polars pyarrow scikit-learn seaborn shap # bottleneck numexpr
+REQUIREMENTS: pip install numpy pandas polars pyarrow scikit-learn seaborn shap # bottleneck numexpr
 NOTES: In a future iteration, I want to include a hyperparameter tuning step in this script
 """
 
@@ -12,7 +12,7 @@ from typing import Final
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd  # I will use only polars when there is more support for polars in sklearn
+import pandas as pd  # I will stop using pandas and use only polars when there is more support for polars in sklearn
 import polars as pl
 import seaborn as sns
 import shap
@@ -20,7 +20,7 @@ from sklearn import linear_model
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.ensemble import ExtraTreesRegressor, HistGradientBoostingRegressor
 from sklearn.feature_selection import VarianceThreshold
-from sklearn.inspection import permutation_importance
+from sklearn.inspection import PartialDependenceDisplay, permutation_importance
 from sklearn.metrics import accuracy_score, mean_absolute_error
 from sklearn.model_selection import cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
@@ -553,6 +553,8 @@ splines_data_preprocessor = ColumnTransformer(
 #       using cross-validation on the 'validation' data partition.
 # For now, I'm simply define the model hyperparameters manually, and
 #       combining the training and validation data:
+# I have some hyperparameter tuning code (using optuna) here:
+#       https://github.com/J-sephB-lt-n/useful-code-snippets/blob/main/snippets/python/hyperparameter_optimisation/optuna_hyperparam_tuning.py
 X_valid = pd.concat([X_train, X_valid])
 y_valid = np.concatenate([y_train, y_valid])
 pipeline_hyperparams = {
@@ -885,6 +887,27 @@ ax.set_xlabel("Increase in MAE under feature permutation")
 ax.figure.tight_layout()
 plt.show()
 plt.clf()
+
+# investigate feature effects on prediction (PDPs and ICE plots) #
+for colname in X_test.columns:
+    # plt.figure(figsize=(10, 8))
+    if colname in categorical_feature_colnames:
+        pdp = PartialDependenceDisplay.from_estimator(
+            estimator=final_model,
+            X=X_test,
+            features=[colname],
+            # kind="both",
+            categorical_features=[colname],
+        )
+    else:
+        pdp = PartialDependenceDisplay.from_estimator(
+            estimator=final_model,
+            X=X_test,
+            features=[colname],
+            kind="both",
+        )
+    plt.tight_layout()
+    plt.show()
 
 
 # investigate feature effects on prediction (SHAP values) #
