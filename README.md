@@ -37,12 +37,15 @@ snippets
 │   ├── gcp
 │   │   ├── flask_app_on_cloud_run.md
 │   │   └── native_python_logging_in_compute_engine_vm_docker.py
+│   ├── local_docker_builds.md
 │   └── python
 │       └── install_chrome_browser_in_python_docker_container
 ├── javascript
 │   └── d3js
 │       └── simple_line_chart.html
 ├── python
+│   ├── cryptography
+│   │   └── fernet_symmetric_encryption.py
 │   ├── dashboard
 │   │   ├── dash
 │   │   │   ├── dash_basic_auth.py
@@ -86,6 +89,8 @@ snippets
 │   │   └── flask
 │   │       ├── programmatically_host_local_flask_app.md
 │   │       └── simple_auth_decorator.md
+│   ├── hyperparameter_optimisation
+│   │   └── optuna_hyperparam_tuning.py
 │   ├── image
 │   │   ├── arrange_images_in_grid.py
 │   │   ├── extract_colour_palette_from_image.py
@@ -107,6 +112,8 @@ snippets
 │   ├── selenium
 │   │   ├── ip_rotation_with_auth_proxy_server.py
 │   │   └── selenium_on_gcp_dev_util.py
+│   ├── sklearn
+│   │   └── pipeline_examples.py
 │   ├── spark
 │   │   └── html_word_counter_gcp_dataproc_gcp_cloud_storage_bs4_pyspark.md
 │   └── stats
@@ -115,5 +122,5 @@ snippets
     └── gcp
         └── create_gcp_service_account.md
 
-40 directories, 57 files
+43 directories, 61 files
 ```
