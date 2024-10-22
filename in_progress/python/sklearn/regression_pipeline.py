@@ -905,6 +905,7 @@ for colname in X_test.columns:
             X=X_test,
             features=[colname],
             kind="both",
+            centered=True,
         )
     plt.tight_layout()
     plt.show()
