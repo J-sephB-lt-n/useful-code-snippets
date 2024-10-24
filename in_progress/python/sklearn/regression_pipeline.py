@@ -880,7 +880,11 @@ importances = pd.DataFrame(
     columns=X.columns[sorted_importances_idx],
 )
 plt.figure(figsize=(12, 6))
-ax = importances.plot.box(vert=False, whis=10, figsize=(12, 6))
+ax = importances.plot.box(
+    vert=False,
+    # whis=[5, 95],  # whiskers extend to 5th and 95th percentile of non-outlier data
+    figsize=(12, 6),
+)
 ax.set_title("Permutation Feature Importances (test set)")
 ax.axvline(x=0, color="k", linestyle="--")
 ax.set_xlabel("Increase in MAE under feature permutation")
