@@ -8,7 +8,7 @@ import altair as alt
 
 alt.renderers.enable("browser")  # makes .display() render plot in a new browser window
 
-data = [
+data: list[dict[str, int]] = [
     {"x": 1, "y": 2},
     {"x": 2, "y": 3},
     {"x": 3, "y": 5},
@@ -16,7 +16,7 @@ data = [
     {"x": 5, "y": 6},
 ]
 
-scatter_plot = (
+scatter_plot: alt.Chart = (
     alt.Chart(alt.Data(values=data))
     .mark_circle(size=60)
     .encode(
@@ -36,7 +36,7 @@ data = [
     {"x": 4, "y": 4, "group": "bad guys"},
     {"x": 5, "y": 6, "group": "police"},
 ]
-scatter_plot = (
+scatter_plot: alt.Chart = (
     alt.Chart(alt.Data(values=data))
     .mark_circle(size=60)
     .encode(
