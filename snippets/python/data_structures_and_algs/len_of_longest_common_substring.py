@@ -4,7 +4,7 @@ DESCRIPTION: Function for finding the length of the longest common substring bet
 NOTES: I took this code from https://www.geeksforgeeks.org/longest-common-substring-dp-29/
 """
 
-def len_of_longest_common_substring(s1: str, s2: str):
+def len_of_longest_common_substring(s1: str, s2: str) -> int:
     """
 Finds the length of the longest common substring between 2 strings 
 
