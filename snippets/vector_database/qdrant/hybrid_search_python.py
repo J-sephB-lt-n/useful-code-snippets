@@ -9,6 +9,7 @@ import itertools
 import re
 import subprocess
 import time
+from typing import Final
 
 import numpy as np
 import requests
@@ -96,19 +97,23 @@ _ = subprocess.run(
 qd_client = qd.QdrantClient(url="http://localhost:6333")
 
 # create collection in vector database #
-_ = qd_client.create_collection(
-    # docs: https://qdrant.tech/documentation/concepts/collections/
-    collection_name="test-collection",
-    vectors_config={
-        "dense_embedding": qd.models.VectorParams(
-            size=384,  # vector dimension
-            distance=qd.models.Distance.DOT,  # {"COSINE", "DOT", "EUCLID", "MANHATTAN"}
-        )
-    },
-    sparse_vectors_config={
-        "tf_idf": qd.models.SparseVectorParams(),
-    },
-)
+COLLECTION_NAME: Final[str] = COLLECTION_NAME
+if not qd_client.collection_exists(
+    collection_name=COLLECTION_NAME,
+):
+    _ = qd_client.create_collection(
+        # docs: https://qdrant.tech/documentation/concepts/collections/
+        collection_name=COLLECTION_NAME,
+        vectors_config={
+            "dense_embedding": qd.models.VectorParams(
+                size=384,  # vector dimension
+                distance=qd.models.Distance.DOT,  # {"COSINE", "DOT", "EUCLID", "MANHATTAN"}
+            )
+        },
+        sparse_vectors_config={
+            "tf_idf": qd.models.SparseVectorParams(),
+        },
+    )
 
 # add all vectors into the vector database #
 for batch in itertools.batched(
@@ -122,7 +127,7 @@ for batch in itertools.batched(
 ):
     qd_client.upsert(
         # docs: https://qdrant.tech/documentation/concepts/points/#upload-points:~:text=Sparse%20vectors%20must%20be%20named%20and%20can%20be%20uploaded%20in%20the%20same%20way%20as%20dense%20vectors.
-        collection_name="test-collection",
+        collection_name=COLLECTION_NAME,
         wait=True,
         points=[
             qd.models.PointStruct(
@@ -151,7 +156,7 @@ query_text: str = "wartime economic statistics"
 
 print(":: Dense embeddings only query ::")
 search_result = qd_client.query_points(
-    collection_name="test-collection",
+    collection_name=COLLECTION_NAME,
     query=dense_embed_model.encode([query_text])[0].tolist(),
     with_payload=True,
     limit=5,
@@ -163,7 +168,7 @@ for result in search_result.points:
 print(":: TF-IDF only query ::")
 query_tfidf_vector = tfidf_vectorizer.transform([query_text])
 search_result = qd_client.query_points(
-    collection_name="test-collection",
+    collection_name=COLLECTION_NAME,
     query=qd.models.SparseVector(
         indices=query_tfidf_vector.indices,
         values=query_tfidf_vector.data,
@@ -178,7 +183,7 @@ for result in search_result.points:
 print(":: Hybrid search using RRF (dense+TF-IDF) ::")
 query_tfidf_vector = tfidf_vectorizer.transform([query_text])
 search_result = qd_client.query_points(
-    collection_name="test-collection",
+    collection_name=COLLECTION_NAME,
     prefetch=[
         qd.models.Prefetch(
             query=dense_embed_model.encode([query_text])[0].tolist(),
