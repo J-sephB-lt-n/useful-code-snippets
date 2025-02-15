@@ -17,6 +17,7 @@ Words joined by underscore in the search query are considered a single phrase e.
 Available snippets:
 
 ```bash
+snippets
 ├── R
 │   └── dataviz
 │       └── feature_distributions_by_continuous_target_variable.R
@@ -111,6 +112,8 @@ Available snippets:
 │   │   ├── llm_retry_pattern.py
 │   │   ├── openai_api
 │   │   │   └── function_calling.py
+│   │   ├── parse_llm_response
+│   │   │   └── extract_markdown_code_blocks.py
 │   │   └── streaming_llama_cpp_response.py
 │   ├── misc
 │   │   ├── code_section_timer.py
@@ -144,5 +147,5 @@ Available snippets:
         ├── python_qdrant_multitenancy_issue_example.py
         └── python_quickstart.md
 
-50 directories, 76 files
+51 directories, 77 files
 ```
