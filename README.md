@@ -114,6 +114,7 @@ snippets
 │   │   │   └── function_calling.py
 │   │   ├── parse_llm_response
 │   │   │   └── extract_markdown_code_blocks.py
+│   │   ├── python_func_defn_as_string.py
 │   │   └── streaming_llama_cpp_response.py
 │   ├── misc
 │   │   ├── code_section_timer.py
@@ -147,5 +148,5 @@ snippets
         ├── python_qdrant_multitenancy_issue_example.py
         └── python_quickstart.md
 
-51 directories, 77 files
+51 directories, 78 files
 ```
