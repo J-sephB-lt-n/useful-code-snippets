@@ -10,7 +10,7 @@ from typing import Callable, Optional
 
 def func_definition_as_string(func: Callable, include_body_code: bool) -> str:
     """
-    Renders the function definition as text (optionally including the body code)
+    Extracts the definition (docstring included) of the provided function and renders it as readable text (optionally including the body code)
     """
     if include_body_code:
         return inspect.getsource(func)
