@@ -10,7 +10,7 @@ from collections import defaultdict
 def extract_markdown_code_blocks(
         input_text: str
     ) -> dict:
-    """TODO"""
+    """Extracts markdown code blocks (and code language) - if there are any - from `input_text`"""
     regex_pattern: str = r"```(\w+)\s*\n(.*?)\n```"
     matches = re.findall(regex_pattern, input_text, re.DOTALL)
     
